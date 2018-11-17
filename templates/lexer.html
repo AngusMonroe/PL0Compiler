@@ -10,6 +10,21 @@
 	<link href="../static/css/codemirror.css" rel="stylesheet" type="text/css">
 	<link href="../static/css/monokai.css" rel="stylesheet" type="text/css">
 	<link href="../static/css/fullscreen.css" rel="stylesheet" type="text/css">
+	<!-- 引入CodeMirror核心文件 -->
+	<script type="text/javascript" src="../static/js/codemirror.js"></script>
+
+	<!-- CodeMirror支持不同语言，根据需要引入JS文件 -->
+	<!-- 因为HTML混合语言依赖Javascript、XML、CSS语言支持，所以都要引入 -->
+	<script type="text/javascript" src="../static/js/javascript.js"></script>
+	<script type="text/javascript" src="../static/js/placeholder.js"></script>
+	<script type="text/javascript" src="../static/js/xml.js"></script>
+	<script type="text/javascript" src="../static/js/css.js"></script>
+	<script type="text/javascript" src="../static/js/htmlmixed.js"></script>
+
+	<!-- 下面分别为显示行数、括号匹配和全屏插件 -->
+	<script type="text/javascript" src="../static/js/active-line.js"></script>
+	<script type="text/javascript" src="../static/js/matchbrackets.js"></script>
+	<script type="text/javascript" src="../static/js/fullscreen.js"></script>
 	<script src="../static/jquery-3.3.1.min.js"></script>
 
 	<link type="text/css" rel="stylesheet" href="../static/css/showBo.css" />
@@ -288,30 +303,67 @@
 	      </span>
 	    </div> -->
 			
-	    <section id="main_content">
+	    <section id="main_content" style="width: 1000px">
 			<div id="head">
 				<h1>XJX LEXER</h1>
 				<p class="sub_head">A PL0 lexical analyzer designed for BUAA Compiler Lab 2018.</p>
 				<div style="height: 60px"></div>
 			</div>
 
-
-
-
-
-						<div id="layout_text" style="float:left">
-							<textarea id="input_text" placeholder="Input your code there." wrap="off"></textarea>
-						</div>
-
-					<div id="layout_confirm" style="float:left">
+			<div class="row" style="width: 950px; position:relative; float: left">
+				<div class="col" style="width: 400px; float: left" align="left" >
+					<textarea id="code" placeholder="Input your code there." name="code" style="resize:none" rows="10" cols="50"></textarea>
+					<div style="height: 20px"></div>
+					<div id="layout_file" style="float:left" align="left">
+						<input id="input-file" type="file" onchange="showFileName()">
+					</div>
+					<div style="height: 20px; width: 400px; float: left" align="left"></div>
+					<div id="layout_confirm" style="width: 400px; float: left" align="left">
 						<button type="submit" class="btn btn-secondary" onclick="submit()">Run</button>
 					</div>
+				</div>
+
+				<div class="col" style="width: 400px; float: right" align="right">
+					<textarea id="result" placeholder="The result would be shown there." style="resize:none" rows="15" cols="45"></textarea>
+				</div>
+
+			</div>
+
+
+
 			<script type="text/javascript">
+                var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
+                    lineNumbers: true,     // 显示行数
+                    indentUnit: 4,         // 缩进单位为4
+                    styleActiveLine: true, // 当前行背景高亮
+                    matchBrackets: true,   // 括号匹配
+                    mode: 'htmlmixed',     // HMTL混合模式
+                    lineWrapping: true,    // 自动换行
+                    theme: 'default'      // 使用monokai模版
+                });
+                editor.setOption("extraKeys", {
+                    // Tab键换成4个空格
+                    Tab: function(cm) {
+                        var spaces = Array(cm.getOption("indentUnit") + 1).join(" ");
+                        cm.replaceSelection(spaces);
+                    },
+                    // F11键切换全屏
+                    "F11": function(cm) {
+                        cm.setOption("fullScreen", !cm.getOption("fullScreen"));
+                    },
+                    // Esc键退出全屏
+                    "Esc": function(cm) {
+                        if (cm.getOption("fullScreen")) cm.setOption("fullScreen", false);
+                    }
+                });
 
                 function submit(){
-
-                    var input_text=document.getElementById('input_text').value;
+                    var input_text = editor.getValue();
 //                    alert(input_text);
+					if(input_text == '')
+					{
+                        alert("Please input code first.");
+					}
 
                     $.ajax({
                         url: "/api/v1/lexer",
@@ -323,74 +375,25 @@
                         processData: false,  // tell jquery not to process the data
                         contentType: 'application/json; charset=UTF-8',
                         dataType: 'json', //注意：这里是指希望服务端返回json格式的数据
-                    	success: function(data) { //这里的data就是json格式的数据
-                            alert(data['data']);
-                    	}
-
-
-
+                        success: function(data) { //这里的data就是json格式的数据
+//                            alert(data['data']);
+                            $("#result").val(data['data']);
+//                            var obj = document.getElementById("result");
+//                            obj.append(data['data']);
+                        }
                     })}
+
+                function showFileName(){
+                    var files=$('#input-file').prop('files');
+                    var reader = new FileReader();
+                    reader.readAsText(files[0],"UTF-8");
+                    reader.onload=function(evt){
+                        var filestring = evt.target.result;
+                        editor.setValue(filestring)
+                    }
+                }
+
 			</script>
-					<div id="layout_file" style="float:left">
-						<input id="input-file" type="file" onchange="showFileName()">
-					</div>
-
-					<script>
-						// function toView(){
-							
-						// 	}
-						$(document).ready(function(){
-            	$("#confirm_button").bind("click",
-              	function() {
-									var input_text=document.getElementById('input_text').value;
-									if(input_text.length>0){
-										$.ajax(
-											{
-												url:'/mainFunc/text',
-												type:'POST',
-												data:{
-														"string":input_text,
-														"csrfmiddlewaretoken":$("[name='csrfmiddlewaretoken']").val()
-												},
-												success:function (data) {
-													data=JSON.parse(data);
-													if (data["status"] == 1) {
-														Showbo.Msg.alert(data["result"]);
-													}
-													else Showbo.Msg.alert("error!");
-												}
-											}
-										)
-									}
-									else{
-										alert("请输入症状！");
-									}
-								}
-								
-								// function() {
-								// 	var input_text=document.getElementById('input_text').value;
-								// 	var result=null;
-								// 	if(input_text.length>0){
-								// 		if(input_text[0]=='我'){
-								// 			result="舒喘灵（片）;世福素（片）;舒利迭（片）;施博（片）;克拉仙（片）";
-								// 		}
-								// 		else if(input_text[0]=='饮'){
-								// 			result="耐信（肠溶片）;泰能（注射剂）;双益健（片）;易善复（片）;沐舒坦（片）;";
-								// 		}
-								// 		else if(input_text[0]=='右'){
-								// 			result="天麻胶囊（胶囊）; 舒普深（注射剂）; 甲强龙（片）; 新山地明（片）; 唐林（片）";
-								// 		}
-								// 		Showbo.Msg.alert(result);
-								// 	}
-								// }
-							);
-						});
-					</script>
-
-
-
-
-
 				<p id="file_name"></p>
 			</section>
 			<div id="bottom_space">© All rights reserved</div>
