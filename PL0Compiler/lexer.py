@@ -28,7 +28,7 @@ def analyze(data):
             if aim and (token is None or len(aim.group(0)) > len(token[0])):
                 token = [aim.group(0), pattern[0]]  # token[token, tag]
         # print(token)
-        data = re.sub(token[0], '', data, count=1)
+        data = data.replace(token[0], '', 1)
         # print(data)
         if token[1] != 'BLANK':
             tokens.append(token)
