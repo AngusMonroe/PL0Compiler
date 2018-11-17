@@ -12,10 +12,14 @@ patterns = {
 }
 
 
-def analyze(file_path):
+def load_data(file_path):
     file = open(file_path, 'r', encoding='utf8')
     data = file.read()
     file.close()
+    return data
+
+
+def analyze(data):
     tokens = []
     while data:
         token = None
@@ -32,4 +36,5 @@ def analyze(file_path):
 
 
 if __name__ == '__main__':
-    print(analyze('../data/test.txt'))
+    test_data = load_data('../data/test.txt')
+    print(analyze(test_data))
