@@ -31,6 +31,10 @@ def analyze(data):
         data = data.replace(token[0], '', 1)
         # print(data)
         if token[1] != 'BLANK':
+            if token[0].isdecimal():
+                token.append(str(bin(int(token[0]))))
+            else:
+                token.append(token[0])
             tokens.append(token)
     return tokens
 

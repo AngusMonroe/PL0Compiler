@@ -24,11 +24,15 @@ def api_lexer():
     data = request.get_json()
     print(data['string'])
     res = lexer.analyze(data['string'])
-    print(res)
+    # print(res)
     ans = ''
     for token in res:
-        ans += token[0] + '\t' + token[1] + '\n'
+        ans += token[2] + '\t' + token[1] + '\t' + token[0] + '\n'
+    # ans = []
+    # for token in res:
+    #     ans.append({'value': token[2], 'type': token[1], 'token': token[0]})
     return json.dumps({'data': ans})
+    # return render_template('lexer.html', temp=res)
 
 
 if __name__ == "__main__":
