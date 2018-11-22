@@ -4,6 +4,7 @@ V = set()
 V_n = set()
 V_t = set()
 priority_tab = dict()
+map = {'1': '>', '0': '=', '-1': '<'}
 
 
 def load_data(file_path):
@@ -13,12 +14,11 @@ def load_data(file_path):
     return data
 
 
-def load_rules(rules):
+def load_rules(rules):  # 计算V，V_n和V_t
     for rule in rules:
         item = rule.split('->')  # item[0]为左侧短语，item[0]为右侧短语
         for r_item in item[1].split('|'):
             gramma.append({'left': item[0], 'right': r_item})  # 将形如"左短语->右短语"的文法保存为{left, right}的dict
-    identifier = gramma[0]['left']
     for rule in gramma:
         for v in rule['right']:
             V.add(v)
@@ -28,7 +28,7 @@ def load_rules(rules):
             V_t.add(v)
 
 
-def cal_first_vt():
+def cal_first_vt():  # 计算FIRSTVT
     stack = []
     first_vt = []
     for rule in gramma:
@@ -49,7 +49,7 @@ def cal_first_vt():
     return first_vt
 
 
-def cal_last_vt():
+def cal_last_vt():  # 计算LASTVT
     stack = []
     last_vt = []
     for rule in gramma:
@@ -70,11 +70,28 @@ def cal_last_vt():
     return last_vt
 
 
+def print_table(dict):  # 输出优先级矩阵
+    list_V_t = list(V_t)
+    table = [([''] * len(list_V_t)) for i in range(len(list_V_t))]
+
+    for pos in dict.keys():
+        if pos[0] in V_t and pos[1] in V_t:
+            table[list_V_t.index(pos[0])][list_V_t.index(pos[1])] = map[str(dict[pos])]
+    ans = ' '
+    for token in list_V_t:
+        ans += '\t' + token
+    ans += '\n'
+    for i, line in enumerate(table):
+        ans += list_V_t[i]
+        for word in line:
+            ans += '\t' + word
+        ans += '\n'
+    print(ans)
+
+
 def judge_gramma():
     first_vt = cal_first_vt()
     last_vt = cal_last_vt()
-    print(first_vt)
-    print(last_vt)
 
     try:
         for rule in gramma:
@@ -110,14 +127,91 @@ def judge_gramma():
         return False
 
 
-def analyze(data):
-    print(priority_tab)
-    pass
+def sub(string, p, c):
+    new = []
+    for s in string:
+        new.append(s)
+    new[p] = c
+    return ''.join(new)
 
+
+def analyze(data):
+    identifier = gramma[0]['left']
+    template = \
+        '{step:>4}    {stack:{program_length}}    {priority:^8}    {cur_sym:^7}    {remaining:{program_length}}' \
+        .replace('{program_length}', str(max(8, len(data))))
+    stack = []
+    cur = 0
+    step = 1
+    ans = template.format(step='STEP', stack='STACK', priority='PRIORITY', cur_sym='CUR_SYM', remaining='REMAINS') + '\n'
+    while cur <= len(data):
+        priority = -1
+
+        if cur == len(data):  # 表达式处理完毕
+            if len(stack) == 1 and stack[-1] == identifier:  # stack中仅剩余一个值
+                ans +=template.format(step=step, stack=''.join(stack), priority='END', cur_sym='', remaining='') + '\n'
+                break
+            else:  # 仍可继续规约
+                cur_sym = ''
+                priority = 1
+        else:
+            cur_sym = data[cur]
+            for i in range(len(stack) - 1, -1, -1):  # 倒序遍历stack，步长为-1
+                if stack[i] in V_t:  # 找到终结符，查优先级矩阵获得其优先级
+                    priority = priority_tab[(stack[i], cur_sym)]
+                    break
+
+        ans += template.format(
+            step=step,
+            stack=''.join(stack),
+            priority='?' if priority is None else map[str(priority)],
+            cur_sym=cur_sym,
+            remaining=data[min(len(data), cur + 1):]) + '\n'
+
+        if priority == 1:  # 进行规约
+            seg = ''  # 待规约字符串
+            a = None  #
+            while True:  # 找到规约字符串
+                if stack[-1] in V_t:  # 栈顶元素是终结符
+                    if a and priority_tab[(stack[-1], a)] == -1:  # 栈顶元素优先级大于待入栈元素
+                        break
+                    else:
+                        a = stack[-1]
+                seg = stack.pop() + seg
+                if len(stack) == 0:
+                    break
+
+            for i in range(len(seg)):
+                if seg[i] in V_n:
+                    seg = sub(seg, i, '%')
+            for rule in gramma:  # 对seg进行规约
+                tmp = ''
+                for i in range(len(rule['right'])):
+                    if rule['right'][i] in V_n:
+                        tmp += '%'
+                    else:
+                        tmp += rule['right'][i]
+                if seg == tmp:
+                    seg = rule['left']
+            if seg:  # 将规约得到的非终结符入栈
+                stack.append(seg)
+            else:
+                print('Error at {}'.format(cur))
+                break
+        elif priority == 0 or priority == -1:
+            stack.append(cur_sym)
+            cur += 1
+        else:
+            print('Error at {}'.format(cur))
+            break
+
+        step += 1
+    return ans
 
 if __name__ == '__main__':
     data = 'i+i*(i+i)'
     rules = load_data('../data/opa.txt')
     load_rules(rules)
     if judge_gramma():
-        analyze(data)
+        # print_table(priority_tab)
+        print(analyze(data))
