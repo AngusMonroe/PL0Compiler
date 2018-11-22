@@ -135,7 +135,23 @@ def sub(string, p, c):
     return ''.join(new)
 
 
+def reduction(seg):
+    for i in range(len(seg)):
+        if seg[i] in V_n:
+            seg = sub(seg, i, '%')
+    for rule in gramma:  # 对seg进行规约
+        tmp = ''
+        for i in range(len(rule['right'])):
+            if rule['right'][i] in V_n:
+                tmp += '%'
+            else:
+                tmp += rule['right'][i]
+        if seg == tmp:
+            return rule['left']
+
+
 def analyze(data):
+    flag = True
     identifier = gramma[0]['left']
     template = \
         '{step:>4}    {stack:{program_length}}    {priority:^8}    {cur_sym:^7}    {remaining:{program_length}}' \
@@ -158,8 +174,15 @@ def analyze(data):
             cur_sym = data[cur]
             for i in range(len(stack) - 1, -1, -1):  # 倒序遍历stack，步长为-1
                 if stack[i] in V_t:  # 找到终结符，查优先级矩阵获得其优先级
-                    priority = priority_tab[(stack[i], cur_sym)]
-                    break
+                    try:
+                        priority = priority_tab[(stack[i], cur_sym)]
+                        break
+                    except Exception:
+                        flag = False
+                        break
+
+        if not flag:
+            break
 
         ans += template.format(
             step=step,
@@ -167,6 +190,9 @@ def analyze(data):
             priority='?' if priority is None else map[str(priority)],
             cur_sym=cur_sym,
             remaining=data[min(len(data), cur + 1):]) + '\n'
+
+        if step == 20:
+            break
 
         if priority == 1:  # 进行规约
             seg = ''  # 待规约字符串
@@ -181,35 +207,30 @@ def analyze(data):
                 if len(stack) == 0:
                     break
 
-            for i in range(len(seg)):
-                if seg[i] in V_n:
-                    seg = sub(seg, i, '%')
-            for rule in gramma:  # 对seg进行规约
-                tmp = ''
-                for i in range(len(rule['right'])):
-                    if rule['right'][i] in V_n:
-                        tmp += '%'
-                    else:
-                        tmp += rule['right'][i]
-                if seg == tmp:
-                    seg = rule['left']
-            if seg:  # 将规约得到的非终结符入栈
-                stack.append(seg)
+            res = reduction(seg)
+
+            if res:  # 将规约得到的非终结符入栈
+                stack.append(res)
             else:
-                print('Error at {}'.format(cur))
+                flag = False
+                # print('Error at {}'.format(cur))
                 break
-        elif priority == 0 or priority == -1:
+        elif priority == 0 or priority == -1:  # 进行移入
             stack.append(cur_sym)
             cur += 1
         else:
-            print('Error at {}'.format(cur))
+            flag = False
+            # print('Error at {}'.format(cur))
             break
 
         step += 1
-    return ans
+    if flag:
+        return ans
+    else:
+        return ans + '\n' + 'Error at {}'.format(cur)
 
 if __name__ == '__main__':
-    data = 'i+i*(i+i)'
+    data = ')('
     rules = load_data('../data/opa.txt')
     load_rules(rules)
     if judge_gramma():
