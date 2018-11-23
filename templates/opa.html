@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"> 
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Operator Priority Analysis</title>
+	<link rel="stylesheet" type="text/css" href="../static/css/normalize.css" />
+	<link rel="stylesheet" type="text/css" href="../static/css/htmleaf-demo.css">
+	<link href="../static/css/codemirror.css" rel="stylesheet" type="text/css">
+	<link href="../static/css/monokai.css" rel="stylesheet" type="text/css">
+	<link href="../static/css/fullscreen.css" rel="stylesheet" type="text/css">
+	<!-- 引入CodeMirror核心文件 -->
+	<script type="text/javascript" src="../static/js/codemirror.js"></script>
+
+	<!-- CodeMirror支持不同语言，根据需要引入JS文件 -->
+	<!-- 因为HTML混合语言依赖Javascript、XML、CSS语言支持，所以都要引入 -->
+	<script type="text/javascript" src="../static/js/javascript.js"></script>
+	<script type="text/javascript" src="../static/js/placeholder.js"></script>
+	<script type="text/javascript" src="../static/js/xml.js"></script>
+	<script type="text/javascript" src="../static/js/css.js"></script>
+	<script type="text/javascript" src="../static/js/htmlmixed.js"></script>
+
+	<!-- 下面分别为显示行数、括号匹配和全屏插件 -->
+	<script type="text/javascript" src="../static/js/active-line.js"></script>
+	<script type="text/javascript" src="../static/js/matchbrackets.js"></script>
+	<script type="text/javascript" src="../static/js/fullscreen.js"></script>
+	<script src="../static/jquery-3.3.1.min.js"></script>
+
+	<link type="text/css" rel="stylesheet" href="../static/css/showBo.css" />
+	<script type="text/javascript" src="../static/js/showBo.js"></script>
+	<style type="text/css">
+		* {
+		      margin: 0; padding: 0;
+		    }
+
+		    html, body {
+		      width: 100%;
+		      height: 100%;
+		      overflow: hidden;
+		    }
+
+		    #container {
+		      overflow: auto;
+		      position: absolute;
+		      top: 0; left: 0; 
+					right: 0; 
+					bottom: 0;
+		    }
+
+		    #background_video {
+		      position: absolute;
+
+		      top: 50%; left: 50%;
+		      transform: translate(-50%, -50%);
+
+		      object-fit: cover;
+		      height: 100%; width: 100%;
+		    }
+
+		    #video_cover {
+		      position: absolute;
+
+		      width: 100%; height: 100%;
+
+		      background: url('../static/img/video_cover.jpg') no-repeat;
+		      background-size: cover;
+		      background-position: center;
+		    }
+
+		    #video_controls {
+		      position: absolute;
+		      left: 50%;
+		      transform: translate(-50%, 0);
+				}
+				
+				#top_space {
+					position: absolute;
+					top: 5%;
+		      left: 80%;
+					transform: translate(-50%, 0);
+					z-index: 3;
+				}
+
+				#bottom_space {
+					position: absolute;
+					bottom: 6%;
+		      left: 50%;
+					transform: translate(-50%, 0);
+					z-index: 3;
+				}
+				
+				#about_us {
+					background: url('../static/img/about.png');
+					width: 60px;
+					height: 60px;
+					background-size: 60px,60px;
+				}
+				
+				#about_us:hover {
+					background: url('../static/img/about_hover.png');
+					width: 60px;
+					height: 60px;
+					background-size: 60px,60px;
+					cursor: pointer;
+		    }
+
+		    #play img {
+		      width: 100px;
+		    }
+		    #pause img {
+		      width: 90px;
+		    }
+		    #pause {
+		      display: none;
+		    }
+
+		    @media (min-width: 768px) {
+		      #video_controls {
+		        display: none;
+		      }
+		    }
+
+		    /* Demo page specific styles */
+
+		    body {
+		      text-align: center;
+		      font-family: 'proxima-nova', Helvetica;
+		    }
+
+		    #container {
+		      height: 100%;
+		    }
+
+
+		    #main_content {
+		      z-index: 2;
+		      position: relative;
+		      display: inline-block;
+
+		      /* Vertical center */
+		      top: 47%;
+		      transform: translateY(-50%);
+		    }
+
+				@media(max-height:400px) {
+					#main_content {
+						top: 10%;
+						transform: none;
+					}
+					#bottom_space {
+						position:relative;
+						top: 6%;
+						left: 50%;
+						transform: translate(-50%, 0);
+						z-index: 3;
+					}
+				}
+
+		    #main_content h1 {
+		      /* text-transform: uppercase; */
+		      font-weight: 600;
+		      font-family: DINNeuzeitGrotesk-BoldCond-Regular;
+		      color: #fff;
+		      font-size: 108px;
+		    }
+
+		    #main_content .sub_head {
+		      color: rgba(255,255,255,0.7);
+		      font-size: 18px;
+		    }
+				
+				@media (max-width: 800px){
+					#main_content h1 {
+						/* text-transform: uppercase; */
+						font-weight: 600;
+						font-family: DINNeuzeitGrotesk-BoldCond-Regular;
+						color: #fff;
+						font-size: 60px;
+					}
+
+					#main_content .sub_head {
+						color: rgba(255,255,255,0.7);
+						font-size: 12px;
+					}
+				}
+
+		    #main_content .info {
+		      color: rgba(255,255,255,0.5);
+		      font-size: 12px;
+		      margin-top: 10px;
+		    }
+
+
+				#input_layout {
+					display: -webkit-box; 
+					display: -moz-box; 
+					display:-webkit-flex;
+					display: -ms-flexbox;
+					display:flex;
+					width: 100%;
+					height: 42px;
+					flex-direction:row;
+					justify-content:space-around;
+				}
+
+				@media (max-width: 800px){
+					#input_layout {
+						flex-direction:column;
+					}
+				}
+
+				#text_file {
+					flex-grow: 1;
+
+				}
+				
+				#layout_text {
+					width: 95%;
+				}
+
+				#input_text {
+					border:0;  
+					resize:none;
+					outline: none;
+					/*scrollbar-arrow-color:yellow;  
+					scrollbar-base-color:lightsalmon;  
+					overflow: hidden;*/  
+					overflow: hidden;
+					color: #29385F;
+					height: 80px;
+					width:100%;
+					line-height: 40px;
+				}
+
+				#input_file {
+					opacity: 0;
+					width: 120px;
+					height: 42px;
+				}
+				
+				#layout_confirm {
+
+					height: 42px;
+				}
+
+				#file_name {
+					color: #fff;
+					height: 40px;
+					font-size: 16px;
+					line-height: 40px;
+				}
+
+		    #links {
+		      margin-top: 50px;
+		    }
+
+		    #links a {
+		      border: 2px solid rgba(255,255,255,0.20);
+		      border-radius: 61px;
+		      font-size: 12px;
+		      color: #FFFFFF;
+		      letter-spacing: 1px;
+		      text-decoration: none;
+		      text-transform: uppercase;
+		      padding: 10px 25px;
+		      display: inline-block;
+		      margin-right: 15px;
+		    }
+
+		    #footer {
+		      position: absolute;
+		      bottom: 0; left: 0; right: 0;
+		    }
+		    #footer a {
+		      color: rgba(255,255,255,0.5);
+		      text-decoration: none;
+		      margin: 10px;
+		      font-size: 12px;
+		    }
+		    #footer a:first-child {
+		      float: left;
+		    }
+		    #footer a:last-child {
+		      float: right;
+		    }
+	</style>
+</head>
+<body>
+	<div id="top_space"><div id="about_us"></div></div>
+	<div id="container">
+
+	    <video id="background_video" loop muted></video>
+	    <div id="video_cover"></div>
+	    <!-- <div id="overlay"></div> -->
+
+	    <!-- <div id="video_controls">
+	      <span id="play">
+	        <img src="play.png">
+	      </span>
+	      <span id="pause">
+	        <img src="pause.png">
+	      </span>
+	    </div> -->
+			
+	    <section id="main_content" style="width: 1100px">
+			<div id="head">
+				<h1>Operator Priority Analysis</h1>
+				<p class="sub_head">A Operator Priority Analyzer designed for BUAA Compiler Lab 2018.</p>
+				<div style="height: 60px"></div>
+			</div>
+
+			<div class="row" style="width: 1050px; position:relative; float: left">
+				<div class="col" style="width: 550px; float: left" align="left" >
+					<textarea id="code" placeholder="Input your code there." name="code" style="resize:none" rows="10" cols="50"></textarea>
+					<div style="height: 20px"></div>
+					<div id="layout_file" style="float:left" align="left">
+						<input id="input-file" type="file" onchange="showFileName()">
+					</div>
+					<div style="height: 20px; width: 400px; float: left" align="left"></div>
+					<div id="layout_confirm" style="width: 400px; float: left" align="left">
+						<button type="submit" class="btn btn-secondary" onclick="submit()">Run</button>
+					</div>
+				</div>
+
+				<div class="col" style="width: 500px; float: right" align="right">
+					<textarea id="result" placeholder="The result would be shown there." style="resize:none" rows="15" cols="45"></textarea>
+				</div>
+
+			</div>
+
+
+
+			<script type="text/javascript">
+                var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
+                    lineNumbers: true,     // 显示行数
+                    indentUnit: 4,         // 缩进单位为4
+                    styleActiveLine: true, // 当前行背景高亮
+                    matchBrackets: true,   // 括号匹配
+                    mode: 'htmlmixed',     // HMTL混合模式
+                    lineWrapping: true,    // 自动换行
+                    theme: 'default'      // 使用monokai模版
+                });
+                editor.setOption("extraKeys", {
+                    // Tab键换成4个空格
+                    Tab: function(cm) {
+                        var spaces = Array(cm.getOption("indentUnit") + 1).join(" ");
+                        cm.replaceSelection(spaces);
+                    },
+                    // F11键切换全屏
+                    "F11": function(cm) {
+                        cm.setOption("fullScreen", !cm.getOption("fullScreen"));
+                    },
+                    // Esc键退出全屏
+                    "Esc": function(cm) {
+                        if (cm.getOption("fullScreen")) cm.setOption("fullScreen", false);
+                    }
+                });
+
+                function submit(){
+                    var input_text = editor.getValue();
+//                    alert(input_text);
+					if(input_text == '')
+					{
+                        alert("Please input code first.");
+					}
+
+                    $.ajax({
+                        url: "/api/v1/opa",
+                        type: 'POST',
+                        data:JSON.stringify({
+                            "string":input_text,
+                            "csrfmiddlewaretoken":$("[name='csrfmiddlewaretoken']").val()
+                        }),
+                        processData: false,  // tell jquery not to process the data
+                        contentType: 'application/json; charset=UTF-8',
+                        dataType: 'json', //注意：这里是指希望服务端返回json格式的数据
+                        success: function(data) { //这里的data就是json格式的数据
+//                            alert(data['data']);
+                            $("#result").val(data['data']);
+//                            var obj = document.getElementById("result");
+//                            obj.append(data['data']);
+                        }
+                    })}
+
+                function showFileName(){
+                    var files=$('#input-file').prop('files');
+                    var reader = new FileReader();
+                    reader.readAsText(files[0],"UTF-8");
+                    reader.onload=function(evt){
+                        var filestring = evt.target.result;
+                        editor.setValue(filestring)
+                    }
+                }
+
+			</script>
+				<p id="file_name"></p>
+			</section>
+			<div id="bottom_space">© All rights reserved</div>
+	  </div>
+	<script src="../static/bideo.js"></script>
+  <script src="../static/main.js"></script>
+</body>
+</html>

@@ -172,14 +172,13 @@ def analyze(data):
                 priority = 1
         else:
             cur_sym = data[cur]
-            for i in range(len(stack) - 1, -1, -1):  # 倒序遍历stack，步长为-1
-                if stack[i] in V_t:  # 找到终结符，查优先级矩阵获得其优先级
-                    try:
+            try:
+                for i in range(len(stack) - 1, -1, -1):  # 倒序遍历stack，步长为-1
+                    if stack[i] in V_t:  # 找到终结符，查优先级矩阵获得其优先级
                         priority = priority_tab[(stack[i], cur_sym)]
                         break
-                    except Exception:
-                        flag = False
-                        break
+            except Exception:
+                flag = False
 
         if not flag:
             break
@@ -230,7 +229,7 @@ def analyze(data):
         return ans + '\n' + 'Error at {}'.format(cur)
 
 if __name__ == '__main__':
-    data = ')('
+    data = 'i+i*(i+i)'
     rules = load_data('../data/opa.txt')
     load_rules(rules)
     if judge_gramma():
