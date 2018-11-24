@@ -68,6 +68,45 @@
 		      background-position: center;
 		    }
 
+		.dropbtn {
+			background-color: #4CAF50;
+			color: white;
+			padding: 16px;
+			font-size: 16px;
+			border: none;
+			cursor: pointer;
+		}
+
+		.dropbtn:hover, .dropbtn:focus {
+			background-color: #3e8e41;
+		}
+
+		.dropdown {
+			position: relative;
+			display: inline-block;
+		}
+
+		.dropdown-content {
+			display: none;
+			position: absolute;
+			background-color: #f9f9f9;
+			min-width: 160px;
+			overflow: auto;
+			box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+			z-index: 1;
+		}
+
+		.dropdown-content a {
+			color: black;
+			padding: 12px 16px;
+			text-decoration: none;
+			display: block;
+		}
+
+		.dropdown a:hover {background-color: #f1f1f1}
+
+		.show {display:block;}
+
 		    #video_controls {
 		      position: absolute;
 		      left: 50%;
@@ -77,7 +116,7 @@
 				#top_space {
 					position: absolute;
 					top: 5%;
-		      left: 80%;
+		      left: 90%;
 					transform: translate(-50%, 0);
 					z-index: 3;
 				}
@@ -287,7 +326,32 @@
 	</style>
 </head>
 <body>
-	<div id="top_space"><div id="about_us"></div></div>
+
+	<!-- 遮罩层 -->
+	<div id="cover" style="background: #000; position: absolute; left: 0px; top: 0px; width: 100%; filter: alpha(opacity=30); opacity: 0.3; display: none; z-index: 2 ">
+
+	</div>
+	<!-- 弹窗 -->
+	<div id="showdiv" style="width: 60%; margin: 0 auto; height: 50%; border: 1px solid #999; display: none; position: absolute; top: 40%; left: 10%; z-index: 3; background: #fff">
+		<!-- 标题 -->
+		<div style="background: #F8F7F7; width: 100%; height: 2rem; font-size: 0.65rem; line-height: 2rem; border: 1px solid #999; text-align: center;" >
+			自定义文法
+		</div>
+		<!-- 内容 -->
+		<textarea id="grammar" placeholder="Input your grammar here." style="resize:none" rows="15" cols="45"></textarea>
+		<!-- 按钮 -->
+		<div style=" width: 80%; margin: 0 auto; height: 1.5rem; line-height: 1.5rem;margin-top: 1rem; -moz-border-radius: .128rem; -webkit-border-radius: .128rem; border-radius: .128rem;font-size: .59733rem">
+			<button type="submit" class="btn btn-secondary" onclick="closeWindow()">OK</button>
+		</div>
+	</div>
+
+	<div id="top_space" class="dropdown">
+		<div id="about_us" onclick="dp()" class="dropbtn"></div>
+		<div id="myDropdown" class="dropdown-content">
+			<a href="#la" onclick="jump2lex()">Lexical Analyzer</a>
+			<a href="#opa" onclick="jump2opa()">Operator Priority Analyzer</a>
+		</div>
+	</div>
 	<div id="container">
 
 	    <video id="background_video" loop muted></video>
@@ -325,13 +389,18 @@
 
 				<div class="col" style="width: 500px; float: right" align="right">
 					<textarea id="result" placeholder="The result would be shown there." style="resize:none" rows="15" cols="45"></textarea>
+					<div style="height: 20px; width: 400px; float: left" align="left"></div>
+					<div id="alter_grammar" style="width: 400px; float: right" align="right">
+						<button type="submit" class="btn btn-secondary" onclick="showWindow()">自定义文法</button>
+					</div>
 				</div>
 
 			</div>
 
 
-
 			<script type="text/javascript">
+                var grammar = '';
+
                 var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
                     lineNumbers: true,     // 显示行数
                     indentUnit: 4,         // 缩进单位为4
@@ -357,6 +426,20 @@
                     }
                 });
 
+                // 弹窗
+                function showWindow() {
+                    $('#showdiv').show();  //显示弹窗
+                    $('#cover').css('display','block'); //显示遮罩层
+                    $('#cover').css('height',document.body.clientHeight+'px'); //设置遮罩层的高度为当前页面高度
+                }
+                // 关闭弹窗
+                function closeWindow() {
+                    $('#showdiv').hide();  //隐藏弹窗
+                    $('#cover').css('display','none');   //显示遮罩层
+                    alert("Success!");
+					grammar = $("#grammar").val();
+                }
+
                 function submit(){
                     var input_text = editor.getValue();
 //                    alert(input_text);
@@ -369,6 +452,7 @@
                         url: "/api/v1/opa",
                         type: 'POST',
                         data:JSON.stringify({
+							"grammar":grammar,
                             "string":input_text,
                             "csrfmiddlewaretoken":$("[name='csrfmiddlewaretoken']").val()
                         }),
@@ -390,6 +474,34 @@
                     reader.onload=function(evt){
                         var filestring = evt.target.result;
                         editor.setValue(filestring)
+                    }
+                }
+
+                function jump2lex() {
+                    window.location.href='lexer'
+                }
+
+                function jump2opa() {
+                    window.location.href='opa'
+                }
+
+                /* 点击按钮，下拉菜单在 显示/隐藏 之间切换 */
+                function dp() {
+                    document.getElementById("myDropdown").classList.toggle("show");
+                }
+
+                // 点击下拉菜单意外区域隐藏
+                window.onclick = function(event) {
+                    if (!event.target.matches('.dropbtn')) {
+
+                        var dropdowns = document.getElementsByClassName("dropdown-content");
+                        var i;
+                        for (i = 0; i < dropdowns.length; i++) {
+                            var openDropdown = dropdowns[i];
+                            if (openDropdown.classList.contains('show')) {
+                                openDropdown.classList.remove('show');
+                            }
+                        }
                     }
                 }
 

@@ -1,5 +1,5 @@
 
-gramma = []
+grammar = []
 V = set()
 V_n = set()
 V_t = set()
@@ -18,8 +18,8 @@ def load_rules(rules):  # 计算V，V_n和V_t
     for rule in rules:
         item = rule.split('->')  # item[0]为左侧短语，item[0]为右侧短语
         for r_item in item[1].split('|'):
-            gramma.append({'left': item[0], 'right': r_item})  # 将形如"左短语->右短语"的文法保存为{left, right}的dict
-    for rule in gramma:
+            grammar.append({'left': item[0], 'right': r_item})  # 将形如"左短语->右短语"的文法保存为{left, right}的dict
+    for rule in grammar:
         for v in rule['right']:
             V.add(v)
         V_n.add(rule['left'])
@@ -31,7 +31,7 @@ def load_rules(rules):  # 计算V，V_n和V_t
 def cal_first_vt():  # 计算FIRSTVT
     stack = []
     first_vt = []
-    for rule in gramma:
+    for rule in grammar:
         b = None
         if rule['right'][0] in V_t:
             b = rule['right'][0]
@@ -42,7 +42,7 @@ def cal_first_vt():  # 计算FIRSTVT
             stack.append((rule['left'], b))
         while len(stack) > 0:
             v, b = stack.pop(-1)
-            for r in gramma:
+            for r in grammar:
                 if r['right'][0] == v and (r['left'], b) not in first_vt:
                     first_vt.append((r['left'], b))
                     stack.append((r['left'], b))
@@ -52,7 +52,7 @@ def cal_first_vt():  # 计算FIRSTVT
 def cal_last_vt():  # 计算LASTVT
     stack = []
     last_vt = []
-    for rule in gramma:
+    for rule in grammar:
         b = None
         if rule['right'][-1] in V_t:
             b = rule['right'][-1]
@@ -63,7 +63,7 @@ def cal_last_vt():  # 计算LASTVT
             stack.append((rule['left'], b))
         while len(stack) > 0:
             v, b = stack.pop(-1)
-            for r in gramma:
+            for r in grammar:
                 if r['right'][-1] == v and (r['left'], b) not in last_vt:
                     last_vt.append((r['left'], b))
                     stack.append((r['left'], b))
@@ -89,12 +89,12 @@ def print_table(dict):  # 输出优先级矩阵
     print(ans)
 
 
-def judge_gramma():
+def judge_grammar():
     first_vt = cal_first_vt()
     last_vt = cal_last_vt()
 
     try:
-        for rule in gramma:
+        for rule in grammar:
             right = rule['right']
             for i in range(len(right) - 1):
                 if right[i] in V_t and right[i + 1] in V_t:
@@ -139,7 +139,7 @@ def reduction(seg):
     for i in range(len(seg)):
         if seg[i] in V_n:
             seg = sub(seg, i, '%')
-    for rule in gramma:  # 对seg进行规约
+    for rule in grammar:  # 对seg进行规约
         tmp = ''
         for i in range(len(rule['right'])):
             if rule['right'][i] in V_n:
@@ -152,7 +152,7 @@ def reduction(seg):
 
 def analyze(data):
     flag = True
-    identifier = gramma[0]['left']
+    identifier = grammar[0]['left']
     template = \
         '{step:>4}    {stack:{program_length}}    {priority:^8}    {cur_sym:^7}    {remaining:{program_length}}' \
         .replace('{program_length}', str(max(8, len(data))))
@@ -232,6 +232,6 @@ if __name__ == '__main__':
     data = 'i+i*(i+i)'
     rules = load_data('../data/opa.txt')
     load_rules(rules)
-    if judge_gramma():
+    if judge_grammar():
         # print_table(priority_tab)
         print(analyze(data))

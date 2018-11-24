@@ -12,6 +12,8 @@ app = Flask(__name__)
 
 PORT = 5000
 
+rules = opa.load_data('data/opa.txt')
+
 
 @app.route("/lexer")
 def show_lexer():
@@ -21,6 +23,8 @@ def show_lexer():
 @app.route("/")
 @app.route("/opa")
 def show_opa():
+    global rules
+    rules = opa.load_data('data/opa.txt')
     return render_template('opa.html')
 
 
@@ -38,12 +42,14 @@ def api_lexer():
 
 @app.route("/api/v1/opa", methods=['POST'])
 def api_opa():
+    global rules
     data = request.get_json()
-    print(data['string'])
-    rules = opa.load_data('data/opa.txt')
+    print(data)
+    if data['grammar']:
+        rules = data['grammar'].split('\n')
     opa.load_rules(rules)
     ans = ''
-    if opa.judge_gramma():
+    if opa.judge_grammar():
         # print_table(priority_tab)
         ans = opa.analyze(data['string'])
     return json.dumps({'data': ans})

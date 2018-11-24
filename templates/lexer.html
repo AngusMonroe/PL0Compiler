@@ -77,10 +77,49 @@
 				#top_space {
 					position: absolute;
 					top: 5%;
-		      left: 80%;
+		      left: 90%;
 					transform: translate(-50%, 0);
 					z-index: 3;
 				}
+
+		.dropbtn {
+			background-color: #4CAF50;
+			color: white;
+			padding: 16px;
+			font-size: 16px;
+			border: none;
+			cursor: pointer;
+		}
+
+		.dropbtn:hover, .dropbtn:focus {
+			background-color: #3e8e41;
+		}
+
+		.dropdown {
+			position: relative;
+			display: inline-block;
+		}
+
+		.dropdown-content {
+			display: none;
+			position: absolute;
+			background-color: #f9f9f9;
+			min-width: 160px;
+			overflow: auto;
+			box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+			z-index: 1;
+		}
+
+		.dropdown-content a {
+			color: black;
+			padding: 12px 16px;
+			text-decoration: none;
+			display: block;
+		}
+
+		.dropdown a:hover {background-color: #f1f1f1}
+
+		.show {display:block;}
 
 				#bottom_space {
 					position: absolute;
@@ -284,10 +323,18 @@
 		    #footer a:last-child {
 		      float: right;
 		    }
+
+
 	</style>
 </head>
 <body>
-	<div id="top_space"><div id="about_us"></div></div>
+	<div id="top_space" class="dropdown">
+		<div id="about_us" onclick="dp()" class="dropbtn"></div>
+		<div id="myDropdown" class="dropdown-content">
+			<a href="#la" onclick="jump2lex()">Lexical Analyzer</a>
+			<a href="#opa" onclick="jump2opa()">Operator Priority Analyzer</a>
+		</div>
+	</div>
 	<div id="container">
 
 	    <video id="background_video" loop muted></video>
@@ -390,6 +437,34 @@
                     reader.onload=function(evt){
                         var filestring = evt.target.result;
                         editor.setValue(filestring)
+                    }
+                }
+
+                function jump2lex() {
+                    window.location.href='lexer'
+                }
+
+                function jump2opa() {
+                    window.location.href='opa'
+                }
+
+                /* 点击按钮，下拉菜单在 显示/隐藏 之间切换 */
+                function dp() {
+                    document.getElementById("myDropdown").classList.toggle("show");
+                }
+
+                // 点击下拉菜单意外区域隐藏
+                window.onclick = function(event) {
+                    if (!event.target.matches('.dropbtn')) {
+
+                        var dropdowns = document.getElementsByClassName("dropdown-content");
+                        var i;
+                        for (i = 0; i < dropdowns.length; i++) {
+                            var openDropdown = dropdowns[i];
+                            if (openDropdown.classList.contains('show')) {
+                                openDropdown.classList.remove('show');
+                            }
+                        }
                     }
                 }
 
