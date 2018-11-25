@@ -26,6 +26,9 @@ def load_rules(rules):  # 计算V，V_n和V_t
     for v in V:
         if v not in V_n:
             V_t.add(v)
+    # print(V)
+    # print(V_n)
+    # print(V_t)
 
 
 def cal_first_vt():  # 计算FIRSTVT
@@ -99,31 +102,31 @@ def judge_grammar():
             for i in range(len(right) - 1):
                 if right[i] in V_t and right[i + 1] in V_t:
                     if (right[i], right[i + 1]) in priority_tab and priority_tab[(right[i], right[i + 1])] != 0:
-                        raise Exception('Not OPG')
+                        raise Exception('Not OG grammar')
                     else:
                         priority_tab[(right[i], right[i + 1])] = 0
                 if i < len(right) - 2 and right[i] in V_t and right[i + 1] in V_n and right[i + 2] in V_t:
                     if (right[i], right[i + 2]) in priority_tab and priority_tab[(right[i], right[i + 2])] != 0:
-                        raise Exception('Not OPG')
+                        raise Exception('Not OPG grammar')
                     else:
                         priority_tab[(right[i], right[i + 2])] = 0
                 if right[i] in V_t and right[i + 1] in V_n:
                     for x, b in first_vt:
                         if x == right[i + 1]:
                             if (right[i], b) in priority_tab and priority_tab[(right[i], b)] != -1:
-                                raise Exception('Not OPG')
+                                raise Exception('Not OPG grammar')
                             else:
                                 priority_tab[(right[i], b)] = -1
                 if right[i] in V_n and right[i + 1] in V_t:
                     for x, a in last_vt:
                         if x == right[i]:
                             if (a, right[i + 1]) in priority_tab and priority_tab[(a, right[i + 1])] != 1:
-                                raise Exception('Not OPG')
+                                raise Exception('Not OPG grammar')
                             else:
                                 priority_tab[(a, right[i + 1])] = 1
         return True
     except Exception:
-        print('Not OPG')
+        print('Not OPG grammar')
         return False
 
 
@@ -232,6 +235,7 @@ if __name__ == '__main__':
     data = 'i+i*(i+i)'
     rules = load_data('../data/opa.txt')
     load_rules(rules)
+    # print(grammar)
     if judge_grammar():
         # print_table(priority_tab)
         print(analyze(data))
