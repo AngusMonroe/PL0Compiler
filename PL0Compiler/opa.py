@@ -95,6 +95,8 @@ def print_table(dict):  # 输出优先级矩阵
 def judge_grammar():
     first_vt = cal_first_vt()
     last_vt = cal_last_vt()
+    # print(first_vt)
+    # print(last_vt)
 
     try:
         for rule in grammar:
@@ -102,26 +104,26 @@ def judge_grammar():
             for i in range(len(right) - 1):
                 if right[i] in V_t and right[i + 1] in V_t:
                     if (right[i], right[i + 1]) in priority_tab and priority_tab[(right[i], right[i + 1])] != 0:
-                        raise Exception('Not OG grammar')
+                        raise Exception('Not OG grammar1')
                     else:
                         priority_tab[(right[i], right[i + 1])] = 0
                 if i < len(right) - 2 and right[i] in V_t and right[i + 1] in V_n and right[i + 2] in V_t:
                     if (right[i], right[i + 2]) in priority_tab and priority_tab[(right[i], right[i + 2])] != 0:
-                        raise Exception('Not OPG grammar')
+                        raise Exception('Not OPG grammar2')
                     else:
                         priority_tab[(right[i], right[i + 2])] = 0
                 if right[i] in V_t and right[i + 1] in V_n:
                     for x, b in first_vt:
                         if x == right[i + 1]:
                             if (right[i], b) in priority_tab and priority_tab[(right[i], b)] != -1:
-                                raise Exception('Not OPG grammar')
+                                raise Exception('Not OPG grammar3')
                             else:
                                 priority_tab[(right[i], b)] = -1
                 if right[i] in V_n and right[i + 1] in V_t:
-                    for x, a in last_vt:
+                    for (x, a) in last_vt:
                         if x == right[i]:
                             if (a, right[i + 1]) in priority_tab and priority_tab[(a, right[i + 1])] != 1:
-                                raise Exception('Not OPG grammar')
+                                raise Exception('Not OPG grammar4')
                             else:
                                 priority_tab[(a, right[i + 1])] = 1
         return True

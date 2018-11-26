@@ -52,6 +52,8 @@ def api_opa():
     if opa.judge_grammar():
         # print_table(priority_tab)
         ans = opa.analyze(data['string'])
+    else:
+        ans = 'Not OPG grammar'
     return json.dumps({'data': ans})
 
 
