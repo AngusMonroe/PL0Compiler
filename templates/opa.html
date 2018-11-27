@@ -332,7 +332,7 @@
 
 	</div>
 	<!-- 弹窗 -->
-	<div id="showdiv" style="width: 60%; margin: 0 auto; height: 50%; border: 1px solid #999; display: none; position: absolute; top: 40%; left: 10%; z-index: 3; background: #fff">
+	<div id="showdiv" style="width: 60%; margin: 0 auto; height: 50%; border: 1px solid #999; display: none; position: absolute; top: 20%; left: 20%; z-index: 3; background: #fff">
 		<!-- 标题 -->
 		<div style="background: #F8F7F7; width: 100%; height: 2rem; font-size: 0.65rem; line-height: 2rem; border: 1px solid #999; text-align: center;" >
 			自定义文法
@@ -340,8 +340,9 @@
 		<!-- 内容 -->
 		<textarea id="grammar" placeholder="Input your grammar here." style="resize:none" rows="15" cols="45"></textarea>
 		<!-- 按钮 -->
-		<div style=" width: 80%; margin: 0 auto; height: 1.5rem; line-height: 1.5rem;margin-top: 1rem; -moz-border-radius: .128rem; -webkit-border-radius: .128rem; border-radius: .128rem;font-size: .59733rem">
-			<button type="submit" class="btn btn-secondary" onclick="closeWindow()">OK</button>
+		<div style=" width: 80%; margin: 0 auto; height: 2rem; line-height: 1.5rem;margin-top: 1rem; -moz-border-radius: .128rem; -webkit-border-radius: .128rem; border-radius: .128rem;font-size: .59733rem">
+			<button type="submit" class="btn btn-secondary" onclick="cancel()" style="float: left; margin-left: 10%; width: 20%; height: 80%">Cancel</button>
+			<button type="submit" class="btn btn-secondary" onclick="closeWindow()" style="float: right; margin-right: 10%; width: 20%; height: 80%">OK</button>
 		</div>
 	</div>
 
@@ -375,7 +376,7 @@
 			</div>
 
 			<div class="row" style="width: 1050px; position:relative; float: left">
-				<div class="col" style="width: 550px; float: left" align="left" >
+				<div class="col" style="width: 530px; float: left" align="left" >
 					<textarea id="code" placeholder="Input your code there." name="code" style="resize:none" rows="10" cols="50"></textarea>
 					<div style="height: 20px"></div>
 					<div id="layout_file" style="float:left" align="left">
@@ -387,8 +388,8 @@
 					</div>
 				</div>
 
-				<div class="col" style="width: 500px; float: right" align="right">
-					<textarea id="result" placeholder="The result would be shown there." style="resize:none" rows="15" cols="45"></textarea>
+				<div class="col" style="width: 520px; float: right" align="right">
+					<textarea id="result" placeholder="The result would be shown there." style="resize: none" rows="15" cols="55" readonly></textarea>
 					<div style="height: 20px; width: 400px; float: left" align="left"></div>
 					<div id="alter_grammar" style="width: 400px; float: right" align="right">
 						<button type="submit" class="btn btn-secondary" onclick="showWindow()">自定义文法</button>
@@ -438,6 +439,12 @@
                     $('#cover').css('display','none');   //显示遮罩层
                     alert("Success!");
 					grammar = $("#grammar").val();
+                }
+
+                // 取消弹窗
+                function cancel() {
+                    $('#showdiv').hide();  //隐藏弹窗
+                    $('#cover').css('display','none');   //显示遮罩层
                 }
 
                 function submit(){
