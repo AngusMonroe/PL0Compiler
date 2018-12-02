@@ -32,7 +32,7 @@ def show_opa():
 def api_lexer():
     data = request.get_json()
     print(data['string'])
-    res = lexer.analyze(data['string'])
+    res = lexer.analyze(data['string'])[0]
     # print(res)
     ans = 'Value\tType\tToken\n'
     for token in res:
