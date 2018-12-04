@@ -1,0 +1,11 @@
+指令	         具体含义	                                  具体操作
+LIT 0 a	     取常量a置于栈顶	                          top++; S[top] = ins.a;
+OPR 0 a	     执行运算，a的值表示执行何种运算	              根据a值的不同执行不同的操作
+LOD l a	     取变量（层次差为l，相对地址为a）置于栈顶	      top++; S[top] = S[base(ins.l) + ins.a];
+STO l a	     将栈顶值存入变量（层次差为l，相对地址为a）	  S[base(ins.l) + ins.a] = S[top]; top--;
+CAL l a	     调用过程（层次差为l，入口指令地址为a）	      S[top + 1] = base(ins.l); S[top + 2] = bp; S[top + 3] = p; bp = top + 1; p = ins.a;
+INT 0 a	     分配空间，栈指针top增加a	                  top += ins.a;
+JMP 0 a	     无条件跳转至地址a	                          p = ins.a;
+JPC 0 a	     条件跳转至地址a	                          if (S[top] == 0) p = ins.a; top--;
+RED l a	     读数据，存入变量（层次差为l，相对地址为a）	  Cin >> S[base(ins.l) + ins.a];
+WRT 0 0	     写数据，将栈顶值输出	                      Cout << S[top] << endl; top++;
