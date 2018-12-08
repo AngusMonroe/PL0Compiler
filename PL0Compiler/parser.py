@@ -2,10 +2,14 @@ from PL0Compiler import lexer, opa
 from enum import Enum
 
 tokens = []  # token表，与lex.py中相同，其中元素格式为{'type': type, 'value': value}
+token_num = -1  # 现在正在处理的token下标
 cur_token = None  # 现在正在处理的token，元素格式为{'type': type, 'value': value}
 cur_lv = -1
 sym_table = []  # 符号表，其中元素为Record对象
 PCode = []  # 最终生成的PCode，其中元素为PCodeOpt对象
+plus_operator = ['+', '-']  # 加减操作符
+multiply_operator = ['*', '/']  # 乘除操作符
+relational_operator = ['=', '<>', '<=', '<', '>=', '>']  # 关系操作符
 
 
 class Record:  # 单条符号表
@@ -55,30 +59,51 @@ class PCodeOpt:  # 单条PCode指令
         return '(f: {}, l: {}, a: {})'.format(self.f, self.l, self.a)
 
 
+def print_PCode():
+    for pcode in PCode:
+        print(pcode)
+
+
+def print_sym_table():
+    for record in sym_table:
+        print(record)
+
+
 def next_token():  # 处理下一个token
-    global cur_token
-    try:
-        cur_token = next(iter(tokens))
-    except StopIteration:
+    global token_num
+    token_num += 1
+    if token_num >= len(tokens):
         raise Exception
         # raise ParserError('unexpected end of program', self.lexer.pos)
+    # try:
+    #     tokens[token_num] = next(iter(tokens))
+    # except StopIteration:
+    #     raise Exception
+    #     # raise ParserError('unexpected end of program', self.lexer.pos)
 
 
 def check_token(token):
+    flag = False
     if token['type'] is None:
-        b = token['value'] == cur_token['value']
+        if token['value'] == tokens[token_num]['value']:
+            flag = True
     elif token['value'] is None:
-        b = token['type'] == cur_token['type']
+        if token['type'] == tokens[token_num]['type']:
+            flag = True
     else:
-        b = token == cur_token
-    if not b:
+        if token == tokens[token_num]:
+            flag = True
+    if not flag:
+        print(token)
+        print(tokens[token_num])
+        print_PCode()
         raise Exception
         # raise ParserError('Expecting "%s" but current token is "%s"' % (str(token.value), str(self.current_token.value)),
         #                   self.lexer.pos)
 
 
 def insert_table(record):  # 向符号表中插入一个Record对象
-    for existing_record in sym_table[::-1]:  # 检查是否重复
+    for existing_record in sym_table:  # 检查是否重复
         if record.level != existing_record.level:
             break
         if record.name == existing_record.name and record.type == existing_record.type:
@@ -88,20 +113,23 @@ def insert_table(record):  # 向符号表中插入一个Record对象
     
     
 def find_sym(name, type_=None):
-        for record in sym_table[::-1]:
-            if record.name == name:
-                if type_ and record.type != type_:
-                    raise Exception
-                    # raise WrongSymbolType('Unexpected symbol type, expecting %s' % type_)
-                else:
-                    return record
-        raise Exception
-        # raise UndefinedSymbol('Undefined symbol: %s' % name)
+    for record in sym_table[::-1]:
+        if record.name == name:
+            if type_ and record.type != type_:
+                raise Exception
+                # raise WrongSymbolType('Unexpected symbol type, expecting %s' % type_)
+            else:
+                return record
+    print_PCode()
+    print_sym_table()
+    print(tokens[token_num])
+    raise Exception
+    # raise UndefinedSymbol('Undefined symbol: %s' % name)
 
 
 def factor():
-    if cur_token['type'] == 'IDENTIFIER':
-        record = find_sym(cur_token['value'], None)
+    if tokens[token_num]['type'] == 'IDENTIFIER':
+        record = find_sym(tokens[token_num]['value'], None)
         if record.type == 'const':
             PCode.append(PCodeOpt(PCodeList.LIT, 0, record.value))
         elif record.type == 'var':
@@ -110,8 +138,8 @@ def factor():
             raise Exception
             # raise ParserError('Wrong variable type')
         next_token()
-    elif cur_token['type'] == 'NUMBER':
-        PCode.append(PCodeOpt(PCodeList.LIT, 0, int(cur_token['value'])))
+    elif tokens[token_num]['type'] == 'NUMBER':
+        PCode.append(PCodeOpt(PCodeList.LIT, 0, int(tokens[token_num]['value'])))
         next_token()
     else:
         check_token(token={'type': None, 'value': '('})
@@ -123,8 +151,8 @@ def factor():
 
 def term():
     factor()
-    while cur_token['type'] == 'MULTIPLY_OPERATOR':
-        op = cur_token['value']
+    while tokens[token_num]['type'] in multiply_operator:
+        op = tokens[token_num]['value']
         next_token()
         factor()
         if op == '*':
@@ -134,16 +162,16 @@ def term():
 
 
 def expression():
-    if cur_token['type'] == 'PLUS_OPERATOR':  # unary operator
-        op = cur_token['value']
+    if tokens[token_num]['type'] in plus_operator:  # unary operator
+        op = tokens[token_num]['value']
         next_token()
         term()
         if op == '-':
             PCode.append(PCodeOpt(PCodeList.OPR, 0, 1))
     else:
         term()
-    while cur_token['type'] == 'PLUS_OPERATOR':  # binary operator
-        op = cur_token['value']
+    while tokens[token_num]['type'] in plus_operator:  # binary operator
+        op = tokens[token_num]['value']
         next_token()
         term()
         if op == '+':
@@ -153,14 +181,14 @@ def expression():
 
 
 def condition():
-    if cur_token['value'] == 'odd':
+    if tokens[token_num]['value'] == 'odd':
         next_token()
         expression()
         PCode.append(PCodeOpt(PCodeList.OPR, 0, 6))
     else:
         expression()
-        check_token(token={'type': 'RELATIONAL_OPERATOR', 'value': None})
-        op = cur_token['value']
+        check_token(token={'type': 'OPERATOR', 'value': None})
+        op = tokens[token_num]['value']
         next_token()
         expression()
         if op == '=':
@@ -178,15 +206,15 @@ def condition():
 
     
 def statement():
-    if cur_token['type'] == 'IDENTIFIER':
-        record = find_sym(cur_token['value'], 'var')
+    if tokens[token_num]['type'] == 'IDENTIFIER':
+        record = find_sym(tokens[token_num]['value'], 'var')
         next_token()
         check_token(token={'type': None, 'value': ':='})
         next_token()
         expression()
         PCode.append(PCodeOpt(PCodeList.STO, cur_lv - record.level, record.address))
 
-    elif cur_token.value == 'if':
+    elif tokens[token_num]['value'] == 'if':
         next_token()
         condition()
         check_token(token={'type': None, 'value': 'then'})
@@ -195,7 +223,7 @@ def statement():
         statement()  # then statement
         # code2 = len(PCode)
         PCode.append(PCodeOpt(PCodeList.JMP, 0, 0))
-        if cur_token['value'] == 'else':
+        if tokens[token_num]['value'] == 'else':
             next_token()
             PCode[len(PCode)].a = len(PCode)
             statement()  # else statement
@@ -203,7 +231,7 @@ def statement():
             PCode[len(PCode)].a = len(PCode)
         PCode[len(PCode)].a = len(PCode)
 
-    elif cur_token['value'] == 'while':
+    elif tokens[token_num]['value'] == 'while':
         # len(PCode) = len(PCode)
         next_token()
         condition()
@@ -215,27 +243,27 @@ def statement():
         PCode.append(PCodeOpt(PCodeList.JMP, 0, len(PCode)))
         PCode[len(PCode)].a = len(PCode)
 
-    elif cur_token['value'] == 'call':
+    elif tokens[token_num]['value'] == 'call':
         next_token()
         check_token(token={'type': 'IDENTIFIER', 'value': None})
-        record = find_sym(cur_token['value'], 'procedure')
+        record = find_sym(tokens[token_num]['value'], 'procedure')
         PCode.append(PCodeOpt(PCodeList.CAL, cur_lv - record.level, record.address))
         next_token()
 
-    elif cur_token['value'] == 'begin':
+    elif tokens[token_num]['value'] == 'begin':
         next_token()
         statement()
-        while cur_token['value'] == ';':
+        while tokens[token_num]['value'] == ';':
             next_token()
             statement()
         check_token(token={'type': None, 'value': 'end'})
         next_token()
 
-    elif cur_token['value'] == 'repeat':
+    elif tokens[token_num]['value'] == 'repeat':
         next_token()
         # len(PCode) = len(PCode)
         statement()
-        while cur_token['value'] == ';':
+        while tokens[token_num]['value'] == ';':
             next_token()
             statement()
         check_token(token={'type': None, 'value': 'until'})
@@ -243,30 +271,30 @@ def statement():
         condition()
         PCode.append(PCodeOpt(PCodeList.JPC, 0, len(PCode)))
 
-    elif cur_token['value'] == 'read':
+    elif tokens[token_num]['value'] == 'read':
         next_token()
         check_token(token={'type': None, 'value': '('})
         next_token()
         while True:
             check_token(token={'type': 'IDENTIFIER', 'value': None})
-            record = find_sym(cur_token['value'], 'var')
+            record = find_sym(tokens[token_num]['value'], 'var')
             PCode.append(PCodeOpt(PCodeList.RED, cur_lv - record.level, record.address))
             next_token()
-            if cur_token['value'] != ',':
+            if tokens[token_num]['value'] != ',':
                 break
             else:
                 next_token()
         check_token(token={'type': None, 'value': ')'})
         next_token()
 
-    elif cur_token['value'] == 'write':
+    elif tokens[token_num]['value'] == 'write':
         next_token()
         check_token(token={'type': None, 'value': '('})
         next_token()
         while True:
             expression()
             PCode.append(PCodeOpt(PCodeList.WRT, 0, 0))
-            if cur_token['value'] != ',':
+            if tokens[token_num]['value'] != ',':
                 break
             else:
                 next_token()
@@ -277,50 +305,53 @@ def statement():
 def block(dx):
     global cur_lv
     cur_lv += 1
+    pcode_len = len(PCode)
+    sym_table_len = len(sym_table)
     PCode.append(PCodeOpt(PCodeList.JMP, 0, 0))
-    if cur_token['value'] == 'const':  # 对const关键字进行处理
+    if tokens[token_num]['value'] == 'const':  # 对const关键字进行处理
         record = Record('const', None, None, 0)
         check_token(token={'type': None, 'value': 'const'})  # 读一个const
         next_token()
         while True:  # 可以同时声明多个常量
             check_token(token={'type': 'IDENTIFIER', 'value': None})  # 读一个变量名
-            record.name = cur_token['value']
+            record.name = tokens[token_num]['value']
             next_token()
             check_token(token={'type': None, 'value': '='})  # 读一个=
             next_token()
             check_token(token={'type': 'NUMBER', 'value': None})  # 读一个数字
-            record.value = int(cur_token['value'])
+            record.value = int(tokens[token_num]['value'])
             insert_table(record)  # 插入记录
             next_token()
-            if cur_token['value'] == ',':  # 如果下一个token是逗号，则忽略
+            if tokens[token_num]['value'] == ',':  # 如果下一个token是逗号，则忽略
                 next_token()
             else:
                 break
         check_token(token={'type': None, 'value': ';'})  # 读一个;
         next_token()
-    if cur_token['value'] == 'var':  # 对var关键字进行处理
+    if tokens[token_num]['value'] == 'var':  # 对var关键字进行处理
         record = Record('var', None, None, cur_lv)
         check_token(token={'type': None, 'value': 'var'})  # 读一个var
         next_token()
         while True:  # 可以同时声明多个var变量
             check_token(token={'type': 'IDENTIFIER', 'value': None})  # 读一个变量名
-            record.name = cur_token['value']
+            record.name = tokens[token_num]['value']
             record.address = dx  # 保存其位置
             dx += 1
+            # print(record)
             insert_table(record)
             next_token()
-            if cur_token['value'] == ',':  # 如果下一个token是逗号，则忽略
+            if tokens[token_num]['value'] == ',':  # 如果下一个token是逗号，则忽略
                 next_token()
             else:
                 break
         check_token(token={'type': None, 'value': ';'})  # 读一个;
         next_token()
-    if cur_token['value'] == 'procedure':  # 对procedure关键字进行处理
+    if tokens[token_num]['value'] == 'procedure':  # 对procedure关键字进行处理
         record = Record('procedure', None, None, cur_lv)
-        while cur_token['value'] == 'procedure':
+        while tokens[token_num]['value'] == 'procedure':
             next_token()
             check_token(token={'type': 'IDENTIFIER', 'value': None})
-            record.name = cur_token['value']
+            record.name = tokens[token_num]['value']
             insert_table(record)
             next_token()
             check_token(token={'type': None, 'value': ';'})
@@ -328,19 +359,23 @@ def block(dx):
             block(3)
             check_token(token={'type': None, 'value': ';'})
             next_token()
-    PCode[len(PCode)].a = len(PCode)  # fill back the JMP inst
-    sym_table[len(sym_table) - 1].address = len(PCode)  # this value will be used by call
+    PCode[pcode_len].a = len(PCode)  # fill back the JMP inst
+    sym_table[sym_table_len - 1].address = len(PCode)  # this value will be used by call
     PCode.append(PCodeOpt(PCodeList.INT, 0, dx))
     statement()
     PCode.append(PCodeOpt(PCodeList.OPR, 0, 0))
     cur_lv -= 1
-    sym_table[len(sym_table):] = []
+    sym_table[sym_table_len:] = []
 
 
 def analyze():
     record = Record()
     insert_table(record)
     block(3)
+    check_token(token={'type': None, 'value': '.'})
+    for ln, line in enumerate(PCode):
+        # print('[%d]' % ln, line)
+        print(line)
 
 
 def main():
