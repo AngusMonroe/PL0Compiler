@@ -1,5 +1,6 @@
 from PL0Compiler import lexer, opa
 from enum import Enum
+from copy import deepcopy
 
 tokens = []  # token表，与lex.py中相同，其中元素格式为{'type': type, 'value': value}
 token_num = -1  # 现在正在处理的token下标
@@ -109,20 +110,22 @@ def insert_table(record):  # 向符号表中插入一个Record对象
         if record.name == existing_record.name and record.type == existing_record.type:
             raise Exception
             # raise DuplicateSymbol('Duplicate symbol name: %s' % record.name)
-    sym_table.append(record)
+
+    sym_table.append(deepcopy(record))
+    # print(deepcopy(record))
     
     
 def find_sym(name, type_=None):
-    for record in sym_table[::-1]:
+    for record in sym_table:
         if record.name == name:
             if type_ and record.type != type_:
                 raise Exception
                 # raise WrongSymbolType('Unexpected symbol type, expecting %s' % type_)
             else:
                 return record
-    print_PCode()
+    # print_PCode()
     print_sym_table()
-    print(tokens[token_num])
+    # print(tokens[token_num])
     raise Exception
     # raise UndefinedSymbol('Undefined symbol: %s' % name)
 
@@ -345,7 +348,9 @@ def block(dx):
             else:
                 break
         check_token(token={'type': None, 'value': ';'})  # 读一个;
-        next_token()
+        # next_token()
+        # print('=========================')
+        print_sym_table()
     if tokens[token_num]['value'] == 'procedure':  # 对procedure关键字进行处理
         record = Record('procedure', None, None, cur_lv)
         while tokens[token_num]['value'] == 'procedure':
