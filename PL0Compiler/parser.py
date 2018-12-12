@@ -97,6 +97,7 @@ def check_token(token):
     if not flag:
         print(token)
         print(tokens[token_num])
+        print(tokens[token_num - 1])
         print_PCode()
         raise Exception
         # raise ParserError('Expecting "%s" but current token is "%s"' % (str(token.value), str(self.current_token.value)),
@@ -154,7 +155,7 @@ def factor():
 
 def term():
     factor()
-    while tokens[token_num]['type'] in multiply_operator:
+    while tokens[token_num]['value'] in multiply_operator:
         op = tokens[token_num]['value']
         next_token()
         factor()
@@ -165,7 +166,7 @@ def term():
 
 
 def expression():
-    if tokens[token_num]['type'] in plus_operator:  # unary operator
+    if tokens[token_num]['value'] in plus_operator:  # unary operator
         op = tokens[token_num]['value']
         next_token()
         term()
@@ -173,7 +174,7 @@ def expression():
             PCode.append(PCodeOpt(PCodeList.OPR, 0, 1))
     else:
         term()
-    while tokens[token_num]['type'] in plus_operator:  # binary operator
+    while tokens[token_num]['value'] in plus_operator:  # binary operator
         op = tokens[token_num]['value']
         next_token()
         term()
@@ -222,29 +223,30 @@ def statement():
         condition()
         check_token(token={'type': None, 'value': 'then'})
         next_token()
+        pcode_len1 = len(PCode)
         PCode.append(PCodeOpt(PCodeList.JPC, 0, 0))
         statement()  # then statement
-        # code2 = len(PCode)
+        pcode_len2 = len(PCode)
         PCode.append(PCodeOpt(PCodeList.JMP, 0, 0))
         if tokens[token_num]['value'] == 'else':
             next_token()
-            PCode[len(PCode)].a = len(PCode)
+            PCode[pcode_len1].a = len(PCode)
             statement()  # else statement
         else:
-            PCode[len(PCode)].a = len(PCode)
-        PCode[len(PCode)].a = len(PCode)
+            PCode[pcode_len1].a = len(PCode)
+        PCode[pcode_len2].a = len(PCode)
 
     elif tokens[token_num]['value'] == 'while':
-        # len(PCode) = len(PCode)
+        pcode_len1 = len(PCode)
         next_token()
         condition()
-        # code2 = len(PCode)
+        pcode_len2 = len(PCode)
         PCode.append(PCodeOpt(PCodeList.JPC, 0, 0))
         check_token(token={'type': None, 'value': 'do'})
         next_token()
         statement()
-        PCode.append(PCodeOpt(PCodeList.JMP, 0, len(PCode)))
-        PCode[len(PCode)].a = len(PCode)
+        PCode.append(PCodeOpt(PCodeList.JMP, 0, pcode_len1))
+        PCode[pcode_len2].a = len(PCode)
 
     elif tokens[token_num]['value'] == 'call':
         next_token()
@@ -264,7 +266,7 @@ def statement():
 
     elif tokens[token_num]['value'] == 'repeat':
         next_token()
-        # len(PCode) = len(PCode)
+        pcode_len = len(PCode)
         statement()
         while tokens[token_num]['value'] == ';':
             next_token()
@@ -272,7 +274,7 @@ def statement():
         check_token(token={'type': None, 'value': 'until'})
         next_token()
         condition()
-        PCode.append(PCodeOpt(PCodeList.JPC, 0, len(PCode)))
+        PCode.append(PCodeOpt(PCodeList.JPC, 0, pcode_len))
 
     elif tokens[token_num]['value'] == 'read':
         next_token()
@@ -340,7 +342,6 @@ def block(dx):
             record.name = tokens[token_num]['value']
             record.address = dx  # 保存其位置
             dx += 1
-            # print(record)
             insert_table(record)
             next_token()
             if tokens[token_num]['value'] == ',':  # 如果下一个token是逗号，则忽略
@@ -348,9 +349,7 @@ def block(dx):
             else:
                 break
         check_token(token={'type': None, 'value': ';'})  # 读一个;
-        # next_token()
-        # print('=========================')
-        print_sym_table()
+        next_token()
     if tokens[token_num]['value'] == 'procedure':  # 对procedure关键字进行处理
         record = Record('procedure', None, None, cur_lv)
         while tokens[token_num]['value'] == 'procedure':
@@ -379,13 +378,12 @@ def analyze():
     block(3)
     check_token(token={'type': None, 'value': '.'})
     for ln, line in enumerate(PCode):
-        # print('[%d]' % ln, line)
         print(line)
 
 
 def main():
     global tokens
-    test_data = lexer.load_data('../data/pl0.txt')
+    test_data = lexer.load_data('../data/right.pl0')
     for token in lexer.analyze(test_data)[1]:  # 初始化tokens
         tokens.append(token)
     next_token()
