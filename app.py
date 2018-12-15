@@ -57,5 +57,17 @@ def api_opa():
     return json.dumps({'data': ans})
 
 
+@app.route("/api/v1/compiler", methods=['POST'])
+def api_compiler():
+    data = request.get_json()
+    print(data['string'])
+    # res = lexer.analyze(data['string'])[0]
+    # # print(res)
+    # ans = 'Value\tType\tToken\n'
+    # for token in res:
+    #     ans += token[2] + '\t' + token[1] + '\t' + token[0] + '\n'
+    return json.dumps({'data': 'success'})
+
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=PORT)

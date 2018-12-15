@@ -116,7 +116,7 @@ def insert_table(record):  # 向符号表中插入一个Record对象
     # print(deepcopy(record))
     
     
-def find_sym(name, type_=None):
+def find_sym(name, type_=None):  # 查询符号表
     for record in sym_table:
         if record.name == name:
             if type_ and record.type != type_:
@@ -354,14 +354,14 @@ def block(dx):
         record = Record('procedure', None, None, cur_lv)
         while tokens[token_num]['value'] == 'procedure':
             next_token()
-            check_token(token={'type': 'IDENTIFIER', 'value': None})
+            check_token(token={'type': 'IDENTIFIER', 'value': None})  # 读一个标识符
             record.name = tokens[token_num]['value']
             insert_table(record)
             next_token()
-            check_token(token={'type': None, 'value': ';'})
+            check_token(token={'type': None, 'value': ';'})  # 读一个;
             next_token()
             block(3)
-            check_token(token={'type': None, 'value': ';'})
+            check_token(token={'type': None, 'value': ';'})  # 读一个;
             next_token()
     PCode[pcode_len].a = len(PCode)  # fill back the JMP inst
     sym_table[sym_table_len - 1].address = len(PCode)  # this value will be used by call
@@ -383,7 +383,7 @@ def analyze():
 
 def main():
     global tokens
-    test_data = lexer.load_data('../data/right.pl0')
+    test_data = lexer.load_data('../data/pl0.txt')
     for token in lexer.analyze(test_data)[1]:  # 初始化tokens
         tokens.append(token)
     next_token()
