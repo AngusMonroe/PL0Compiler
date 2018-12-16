@@ -4,7 +4,7 @@ from flask import Flask
 from flask import render_template
 from flask import request
 from flask import jsonify
-from PL0Compiler import lexer, opa
+from PL0Compiler import lexer, opa, parser
 import sys
 import json
 
@@ -20,12 +20,17 @@ def show_lexer():
     return render_template('lexer.html')
 
 
-@app.route("/")
 @app.route("/opa")
 def show_opa():
     global rules
     rules = opa.load_data('data/opa.txt')
     return render_template('opa.html')
+
+
+@app.route("/")
+@app.route("/compiler")
+def show_compiler():
+    return render_template('compiler.html')
 
 
 @app.route("/api/v1/lexer", methods=['POST'])
@@ -48,7 +53,6 @@ def api_opa():
     if data['grammar']:
         rules = data['grammar'].split('\n')
     opa.load_rules(rules)
-    ans = ''
     if opa.judge_grammar():
         # print_table(priority_tab)
         ans = opa.analyze(data['string'])
@@ -61,12 +65,12 @@ def api_opa():
 def api_compiler():
     data = request.get_json()
     print(data['string'])
-    # res = lexer.analyze(data['string'])[0]
-    # # print(res)
-    # ans = 'Value\tType\tToken\n'
-    # for token in res:
-    #     ans += token[2] + '\t' + token[1] + '\t' + token[0] + '\n'
-    return json.dumps({'data': 'success'})
+    pcode = parser.main(data['string'])
+    ans = ''
+    for record in pcode:
+        ans += str(record) + '\n'
+        # ans += record.f + ', ' + record.l + ', ' + record.f + '\n'
+    return json.dumps({'data': ans})
 
 
 if __name__ == "__main__":

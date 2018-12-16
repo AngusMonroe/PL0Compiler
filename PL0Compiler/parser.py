@@ -377,17 +377,18 @@ def analyze():
     insert_table(record)
     block(3)
     check_token(token={'type': None, 'value': '.'})
-    for ln, line in enumerate(PCode):
-        print(line)
 
 
-def main():
+def main(data):
     global tokens
-    test_data = lexer.load_data('../data/pl0.txt')
-    for token in lexer.analyze(test_data)[1]:  # 初始化tokens
+    for token in lexer.analyze(data)[1]:  # 初始化tokens
         tokens.append(token)
     next_token()
     analyze()
+    return PCode
 
 if __name__ == '__main__':
-    main()
+    test_data = lexer.load_data('../data/pl0.txt')
+    main(test_data)
+    for ln, line in enumerate(PCode):
+        print(line)
