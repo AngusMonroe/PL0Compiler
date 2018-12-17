@@ -43,4 +43,4 @@ def analyze(data):
 
 if __name__ == '__main__':
     test_data = load_data('../data/test.txt')
-    print(analyze(test_data)[0])
+    print(analyze(test_data)[1])

@@ -4,13 +4,13 @@ from flask import Flask
 from flask import render_template
 from flask import request
 from flask import jsonify
-from PL0Compiler import lexer, opa, parser
 import sys
 import json
+from PL0Compiler import opa
 
 app = Flask(__name__)
 
-PORT = 5000
+PORT = 5014
 
 rules = opa.load_data('data/opa.txt')
 
@@ -35,6 +35,7 @@ def show_compiler():
 
 @app.route("/api/v1/lexer", methods=['POST'])
 def api_lexer():
+    from PL0Compiler import lexer
     data = request.get_json()
     print(data['string'])
     res = lexer.analyze(data['string'])[0]
@@ -63,13 +64,15 @@ def api_opa():
 
 @app.route("/api/v1/compiler", methods=['POST'])
 def api_compiler():
+    from PL0Compiler import parser
+    parser.init()
     data = request.get_json()
     print(data['string'])
     pcode = parser.main(data['string'])
     ans = ''
-    for record in pcode:
+    for ln, record in enumerate(pcode):
         ans += str(record) + '\n'
-        # ans += record.f + ', ' + record.l + ', ' + record.f + '\n'
+        # ans += record.f + ', ' + record.l + ', ' + record.a + '\n'
     return json.dumps({'data': ans})
 
 

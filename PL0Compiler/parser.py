@@ -34,6 +34,16 @@ class Record:  # 单条符号表
             self.type, self.name, self.value, self.level, self.address, self.size) + '}'
 
 
+class PCodeOpt:  # 单条PCode指令
+    def __init__(self, f=None, l=None, a=None):
+        self.f = f
+        self.l = l
+        self.a = a
+
+    def __str__(self):
+        return '(f: {}, l: {}, a: {})'.format(self.f, self.l, self.a)
+
+
 class PCodeList(Enum):  # PCode指令集
     LIT = 1  # 取常量a放到数据栈栈顶
     OPR = 2  # 执行运算，a表示执行何种运算(+ - * /)
@@ -50,14 +60,14 @@ class PCodeList(Enum):  # PCode指令集
         return self.name
 
 
-class PCodeOpt:  # 单条PCode指令
-    def __init__(self, f=None, l=None, a=None):
-        self.f = f
-        self.l = l
-        self.a = a
-
-    def __str__(self):
-        return '(f: {}, l: {}, a: {})'.format(self.f, self.l, self.a)
+def init():
+    global tokens, token_num, cur_token, cur_lv, sym_table, PCode
+    tokens = []  # token表，与lex.py中相同，其中元素格式为{'type': type, 'value': value}
+    token_num = -1  # 现在正在处理的token下标
+    cur_token = None  # 现在正在处理的token，元素格式为{'type': type, 'value': value}
+    cur_lv = -1
+    sym_table = []  # 符号表，其中元素为Record对象
+    PCode = []  # 最终生成的PCode，其中元素为PCodeOpt对象
 
 
 def print_PCode():
