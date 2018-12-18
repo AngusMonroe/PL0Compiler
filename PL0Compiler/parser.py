@@ -399,6 +399,6 @@ def main(data):
 
 if __name__ == '__main__':
     test_data = lexer.load_data('../data/pl0.txt')
-    main(test_data)
+    print(main(test_data))
     for ln, line in enumerate(PCode):
         print(line)

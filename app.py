@@ -68,11 +68,13 @@ def api_compiler():
     parser.init()
     data = request.get_json()
     print(data['string'])
-    pcode = parser.main(data['string'])
-    ans = ''
-    for ln, record in enumerate(pcode):
-        ans += str(record) + '\n'
-        # ans += record.f + ', ' + record.l + ', ' + record.a + '\n'
+    try:
+        pcode = parser.main(data['string'])
+        ans = ''
+        for ln, record in enumerate(pcode):
+            ans += str(record.f) + ', ' + str(record.l) + ', ' + str(record.a) + '\n'
+    except Exception:
+        ans = 'Error!'
     return json.dumps({'data': ans})
 
 
