@@ -44,7 +44,7 @@ def analyze(data):
         # print(data)
 
         if token[1] == 'UNDEFINED_SYMBOL':
-            e.table.append(LexerError('Unidentified character', pos))  # 非法字符异常
+            e.table.append(LexerError(message='Unidentified character', pos=(pos[0], pos[1]), token=token[0]))  # 非法字符异常
             continue
 
         if token[1] != 'BLANK':
@@ -53,8 +53,7 @@ def analyze(data):
             else:
                 token.append(token[0])
             res.append(token)
-            tokens.append({'type': token[1], 'value': token[0], 'pos': copy.deepcopy(pos)})
-    print(e.table)
+            tokens.append({'type': token[1], 'value': token[0], 'pos': (pos[0], pos[1])})
     return res, tokens, e
 
 

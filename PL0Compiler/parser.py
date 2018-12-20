@@ -74,11 +74,13 @@ def print_sym_table():  # 输出符号表
         print(record)
 
 
-def jump_line():  # 将一整行的token跳过
+def skip_error():  # 将一整行的token跳过
     cur_line = tokens[token_num]['pos'][0]
-    while tokens[token_num]['pos'][0] == cur_line:
+    while tokens[token_num]['pos'][0] == cur_line:  # and tokens[token_num]['value'] != (',' or ';'):
         # print(tokens[token_num]['pos'][0])
         next_token()
+    # if tokens[token_num]['value'] != (',' or ';'):
+    #     next_token()
 
 
 def next_token():  # 处理下一个token
@@ -101,8 +103,11 @@ def check_token(token):  # 查看当前token是否符合要求
         if token == tokens[token_num]:
             flag = True
     if not flag:
-        e.table.append(ParserError('Expecting "%s" but current token is "%s"' % (str(token['value']),
-                       str(tokens[token_num]['value']))))
+        if tokens[token_num]['value'] == ':=' and token['value'] == '=':
+            e.table.append(ParserError(type_=1, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
+        else:
+            e.table.append(ParserError('Expecting "%s" but current token is "%s"' % (str(token['value']),
+                           str(tokens[token_num]['value']))))
         raise ParserError
 
 
@@ -222,7 +227,7 @@ def statement():
             expression()  # 表达式
             PCode.append(PCodeOpt(PCodeList.STO, cur_lv - record.level, record.address))
         except ParserError:
-            jump_line()
+            skip_error()
     elif tokens[token_num]['value'] == 'if':  # if语句
         try:
             next_token()
@@ -242,7 +247,7 @@ def statement():
                 PCode[pcode_len1].a = len(PCode)
             PCode[pcode_len2].a = len(PCode)
         except ParserError:
-            jump_line()
+            skip_error()
     elif tokens[token_num]['value'] == 'while':
         pcode_len1 = len(PCode)
         next_token()
@@ -342,7 +347,7 @@ def block(dx):
             check_token(token={'type': None, 'value': ';'})  # 读一个;
             next_token()
     except ParserError:
-        jump_line()
+        skip_error()
     try:
         if tokens[token_num]['value'] == 'var':  # 对var关键字进行处理
             record = Record('var', None, None, cur_lv)
@@ -362,7 +367,7 @@ def block(dx):
             check_token(token={'type': None, 'value': ';'})  # 读一个;
             next_token()
     except ParserError:
-        jump_line()
+        skip_error()
     try:
         if tokens[token_num]['value'] == 'procedure':  # 对procedure关键字进行处理
             record = Record('procedure', None, None, cur_lv)
@@ -378,7 +383,7 @@ def block(dx):
                 check_token(token={'type': None, 'value': ';'})  # 读一个;
                 next_token()
     except ParserError:
-        jump_line()
+        skip_error()
     PCode[pcode_len].a = len(PCode)  # fill back the JMP inst
     sym_table[sym_table_len - 1].address = len(PCode)  # this value will be used by call
     PCode.append(PCodeOpt(PCodeList.INT, 0, dx))
@@ -411,6 +416,5 @@ def main(data):
     return ans
 
 if __name__ == '__main__':
-    test_data = lexer.load_data('../data/right.pl0')
+    test_data = lexer.load_data('../data/test.txt')
     print(main(test_data))
-    print(e.table)
