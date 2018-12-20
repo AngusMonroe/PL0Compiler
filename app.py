@@ -65,14 +65,10 @@ def api_opa():
 @app.route("/api/v1/compiler", methods=['POST'])
 def api_compiler():
     from PL0Compiler import parser
-    parser.init()
     data = request.get_json()
     print(data['string'])
     try:
-        pcode = parser.main(data['string'])
-        ans = ''
-        for ln, record in enumerate(pcode):
-            ans += str(record.f) + ', ' + str(record.l) + ', ' + str(record.a) + '\n'
+        ans = parser.main(data['string'])
     except Exception:
         ans = 'Error!'
     return json.dumps({'data': ans})
