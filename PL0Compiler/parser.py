@@ -508,7 +508,7 @@ def block(dx):
                 else:
                     skip_error()
     if tokens[token_num]['type'] != 'IDENTIFIER' \
-            or tokens[token_num]['value'] not in ['if', 'while', 'call', 'begin', 'repeat', 'read', 'write']:
+            and tokens[token_num]['value'] not in ['if', 'while', 'call', 'begin', 'repeat', 'read', 'write']:
         e.table.append(ParserError(type_=6, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
         skip_error()
     print(tokens[token_num]['value'])
@@ -553,5 +553,5 @@ def main(data):
     return ans
 
 if __name__ == '__main__':
-    test_data = lexer.load_data('../data/wrong1.pl0')
+    test_data = lexer.load_data('../data/right.pl0')
     print(main(test_data))

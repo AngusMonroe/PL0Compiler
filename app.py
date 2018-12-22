@@ -28,9 +28,9 @@ def show_opa():
 
 
 @app.route("/")
-@app.route("/compiler")
+@app.route("/parser")
 def show_compiler():
-    return render_template('compiler.html')
+    return render_template('parser.html')
 
 
 @app.route("/api/v1/lexer", methods=['POST'])
@@ -62,7 +62,7 @@ def api_opa():
     return json.dumps({'data': ans})
 
 
-@app.route("/api/v1/compiler", methods=['POST'])
+@app.route("/api/v1/parser", methods=['POST'])
 def api_compiler():
     from PL0Compiler import parser
     data = request.get_json()
