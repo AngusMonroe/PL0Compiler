@@ -326,7 +326,7 @@ def statement():
                 PCode[pcode_len1].a = len(PCode)
             PCode[pcode_len2].a = len(PCode)
         except ParserError:
-            skip_error()
+            skip_error(struct='statement')
     elif tokens[token_num]['value'] == 'while':  # while-do语句
         try:
             pcode_len1 = len(PCode)
@@ -503,7 +503,12 @@ def block(dx):
     sym_table[sym_table_len:] = []
 
 
-def analyze():
+def analyze(data):
+    global tokens, e
+    init()
+    res, tokens, e = lexer.analyze(data)
+    print(tokens)
+    next_token()
     record = Record()
     insert_table(record)
     block(3)
@@ -511,21 +516,11 @@ def analyze():
         check_token(token={'type': None, 'value': '.'})
     except ParserError:
         pass
-    # try:
-    #     block(3)
-    #     check_token(token={'type': None, 'value': '.'})
-    # except ParserError as e:
-    #     if e.type == '25':
-    #         pass
+    return PCode
 
 
 def main(data):
-    global tokens, e
-    init()
-    res, tokens, e = lexer.analyze(data)
-    print(tokens)
-    next_token()
-    analyze()
+    analyze(data)
     ans = ''
     if len(e.table) > 0:
         for error_record in e.table:
