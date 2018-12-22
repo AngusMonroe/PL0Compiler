@@ -43,11 +43,13 @@ def analyze(data):
         # print(data)
 
         if token[1] == 'UNDEFINED_SYMBOL':
-            e.table.append(LexerError(message='Unidentified character', pos=(pos[0], pos[1]), token=token[0]))  # 非法字符异常
+            e.table.append(ParserError(type_=27, pos=(pos[0], pos[1]), token=token[0]))  # 非法字符异常
             pos[1] += len(token[0])
             continue
 
         if token[1] != 'BLANK':
+            if token[1] == 'NUMBER' and int(token[0]) > 2**16 - 1:  # 判断数字过大
+                e.table.append(ParserError(type_=30, pos=(pos[0], pos[1]), token=token[0]))  # 非法字符异常
             if token[0].isdecimal():  # 将整数转换为二进制
                 token.append(str(bin(int(token[0]))))
             else:
@@ -59,6 +61,6 @@ def analyze(data):
 
 
 if __name__ == '__main__':
-    test_data = load_data('../data/right.pl0')
+    test_data = load_data('../data/e27.txt')
     print(analyze(test_data)[1])
 

@@ -1,0 +1,5 @@
+var a;
+begin
+a:=1;
+if *1*2>2 then a:=a+1;
+end.

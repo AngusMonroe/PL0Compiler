@@ -8,17 +8,6 @@ class CompilerError(Exception):
             self.message, self.pos[0], self.pos[1])
 
 
-class LexerError(CompilerError):
-    def __init__(self, message='Lexer Error', pos=(0, 0), token=None):
-        self.message = message
-        self.pos = pos
-        self.token = token
-
-    def __str__(self):
-        return '{} with token "{}" at line {}, position {}.'.format(
-            self.message, self.token, self.pos[0], self.pos[1])
-
-
 class ParserError(CompilerError):
     def __init__(self, type_=0, pos=(0, 0), token=''):
         error_list = {  # 定义一个map，相当于定义case：func()
@@ -48,7 +37,11 @@ class ParserError(CompilerError):
             '23': 'Incorrect token after factor',  # 因子后不可为此符号
             '24': 'Expression could not begin with "' + token + '"',  # 表达式不能以此符号开始
             '25': 'Unexpected end of program',  # 程序非正常结束
+            '26': 'Duplicate symbol',  # 重复声明
+            '27': 'Unidentified character',  # 非法字符
+            '28': 'Unexpected symbol type',  # 字符类型错误
             '30': 'Too big number',  # 这个数太大
+            '35': 'Other error',  # 其他错误
             '40': 'Must be "("'  # 应为左括号
         }
         self.type = type_
@@ -62,24 +55,6 @@ class ParserError(CompilerError):
 
     def __eq__(self, other):
         return self.type == other.type and self.pos == other.pos
-
-
-class DuplicateSymbol(ParserError):
-    def __init__(self, message='Duplicate symbol', pos=(0, 0)):
-        self.message = message
-        self.pos = pos
-
-
-class UndefinedSymbol(ParserError):
-    def __init__(self, message='Undefined symbol', pos=(0, 0)):
-        self.message = message
-        self.pos = pos
-
-
-class WrongSymbolType(ParserError):
-    def __init__(self, message='Unexpected symbol type', pos=(0, 0)):
-        self.message = message
-        self.pos = pos
 
 
 class InterpreterError(CompilerError):

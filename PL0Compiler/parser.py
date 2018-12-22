@@ -75,14 +75,22 @@ def print_sym_table():  # 输出符号表
 
 
 def skip_error(struct=None):  # 将一整行的token跳过
-    global token_num
-    print('skip line ' + str(tokens[token_num]['pos'][0]))
-    cur_line = tokens[token_num]['pos'][0]
-    while tokens[token_num]['pos'][0] == cur_line:  # and tokens[token_num]['value'] != (',' or ';'):
-        # print(tokens[token_num]['pos'][0])
-        next_token()
-    if struct == 'statement':
-        token_num -= 1
+    try:
+        print(tokens[token_num]['value'])
+    except IndexError:
+        e.table.append(ParserError(type_=25, pos=tokens[token_num - 1]['pos'], token=tokens[token_num - 1]['value']))
+        return
+    if tokens[token_num]['pos'][0] != tokens[token_num - 1]['pos'][0]:
+        cur_line = tokens[token_num - 1]['pos'][0]
+    else:
+        cur_line = tokens[token_num]['pos'][0]
+        while tokens[token_num]['pos'][0] == cur_line:  # and tokens[token_num]['value'] != (',' or ';'):
+            if struct == 'statement' and tokens[token_num]['value'] == ';':
+                break
+            # print(tokens[token_num]['pos'][0])
+            next_token()
+    print('skip line ' + str(cur_line))
+
     # if tokens[token_num]['value'] != (',' or ';'):
     #     next_token()
 
@@ -141,26 +149,41 @@ def check_token(token, struct=None):  # 查看当前token是否符合要求
             e.table.append(ParserError(type_=14, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
         elif token['value'] == 'then':
             e.table.append(ParserError(type_=16, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
+        elif token['value'] == 'end':
+            e.table.append(ParserError(type_=17, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
+        elif token['value'] == 'do':
+            e.table.append(ParserError(type_=18, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
+        elif struct == 'relational_operator':
+            if tokens[token_num]['type'] == 'KEYWORD':
+                e.table.append(ParserError(type_=20, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
+            else:
+                e.table.append(ParserError(type_=23, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
+        elif token['value'] == ')':
+            e.table.append(ParserError(type_=22, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
+        elif token['value'] == '(':
+            if struct == 'factor':
+                e.table.append(ParserError(type_=24, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
+            else:
+                e.table.append(ParserError(type_=40, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
         else:
             print(token)
             print(tokens[token_num])
-            e.table.append(ParserError('Expecting "%s" but current token is "%s"' % (str(token['value']),
-                           str(tokens[token_num]['value']))))
+            e.table.append(ParserError(type_=35, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
         raise ParserError
 
 
 def insert_table(record):  # 向符号表中插入一个Record对象
     global sym_table
-    for existing_record in sym_table:  # 检查是否重复
+    for existing_record in reversed(sym_table):  # 检查是否重复
         if record.level != existing_record.level:
             break
-        if record.name == existing_record.name and record.type == existing_record.type:
-            raise Exception
-            # raise DuplicateSymbol('Duplicate symbol name: %s' % record.name)
+
+        if record.name == existing_record.name:
+            e.table.append(ParserError(type_=26, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
+            raise ParserError
 
     sym_table.append(deepcopy(record))
-    # print(deepcopy(record))
-    
+
     
 def find_sym(name, type_=None):  # 查询符号表
     for record in sym_table:
@@ -169,21 +192,20 @@ def find_sym(name, type_=None):  # 查询符号表
                 if record.type == 'const' or 'var' and tokens[token_num - 1] == 'call':
                     e.table.append(
                         ParserError(type_=15, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
-                    raise ParserError
                 elif record.type == 'const' or 'procedure' and tokens[token_num + 1] == ':=':
                     e.table.append(
                         ParserError(type_=12, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
-                    raise ParserError
                 else:
-                    e.table.append(WrongSymbolType('Unexpected symbol type, expecting %s' % type_))
-                    raise WrongSymbolType
+                    e.table.append(
+                        ParserError(type_=28, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
+                raise ParserError
             else:
                 return record
     # print_PCode()
-    print_sym_table()
+    # print_sym_table()
     # print(tokens[token_num])
     e.table.append(ParserError(type_=11, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
-    raise UndefinedSymbol
+    raise ParserError
 
 
 def factor():
@@ -194,14 +216,14 @@ def factor():
         elif record.type == 'var':
             PCode.append(PCodeOpt(PCodeList.LOD, cur_lv - record.level, record.address))
         elif record.type == 'procedure':
-            raise Exception
-            # raise ParserError('Wrong variable type')
+            e.table.append(ParserError(type_=21, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
+            raise ParserError
         next_token()
     elif tokens[token_num]['type'] == 'NUMBER':
         PCode.append(PCodeOpt(PCodeList.LIT, 0, int(tokens[token_num]['value'])))
         next_token()
     else:
-        check_token(token={'type': None, 'value': '('})
+        check_token(token={'type': None, 'value': '('}, struct='factor')
         next_token()
         expression()
         check_token(token={'type': None, 'value': ')'})
@@ -245,23 +267,31 @@ def condition():
         expression()
         PCode.append(PCodeOpt(PCodeList.OPR, 0, 6))
     else:
+
         expression()
-        check_token(token={'type': 'OPERATOR', 'value': None})
-        op = tokens[token_num]['value']
-        next_token()
-        expression()
-        if op == '=':
-            PCode.append(PCodeOpt(PCodeList.OPR, 0, 7))
-        elif op == '<>':
-            PCode.append(PCodeOpt(PCodeList.OPR, 0, 8))
-        elif op == '<':
-            PCode.append(PCodeOpt(PCodeList.OPR, 0, 9))
-        elif op == '>=':
-            PCode.append(PCodeOpt(PCodeList.OPR, 0, 10))
-        elif op == '>':
-            PCode.append(PCodeOpt(PCodeList.OPR, 0, 11))
-        elif op == '<=':
-            PCode.append(PCodeOpt(PCodeList.OPR, 0, 12))
+        try:
+            check_token(token={'type': 'OPERATOR', 'value': None}, struct='relational_operator')
+            op = tokens[token_num]['value']
+            if op in relational_operator:
+                next_token()
+                expression()
+                if op == '=':
+                    PCode.append(PCodeOpt(PCodeList.OPR, 0, 7))
+                elif op == '<>':
+                    PCode.append(PCodeOpt(PCodeList.OPR, 0, 8))
+                elif op == '<':
+                    PCode.append(PCodeOpt(PCodeList.OPR, 0, 9))
+                elif op == '>=':
+                    PCode.append(PCodeOpt(PCodeList.OPR, 0, 10))
+                elif op == '>':
+                    PCode.append(PCodeOpt(PCodeList.OPR, 0, 11))
+                elif op == '<=':
+                    PCode.append(PCodeOpt(PCodeList.OPR, 0, 12))
+            else:
+                e.table.append(ParserError(type_=20, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
+                raise ParserError
+        except ParserError:
+            skip_error(struct='statement')
 
     
 def statement():
@@ -277,7 +307,7 @@ def statement():
             PCode.append(PCodeOpt(PCodeList.STO, cur_lv - record.level, record.address))
         except ParserError:
             skip_error(struct='statement')
-    elif tokens[token_num]['value'] == 'if':  # if语句
+    elif tokens[token_num]['value'] == 'if':  # if-then语句
         try:
             next_token()
             condition()  # 条件语句
@@ -297,19 +327,22 @@ def statement():
             PCode[pcode_len2].a = len(PCode)
         except ParserError:
             skip_error()
-    elif tokens[token_num]['value'] == 'while':
-        pcode_len1 = len(PCode)
-        next_token()
-        condition()
-        pcode_len2 = len(PCode)
-        PCode.append(PCodeOpt(PCodeList.JPC, 0, 0))
-        check_token(token={'type': None, 'value': 'do'})
-        next_token()
-        statement()
-        PCode.append(PCodeOpt(PCodeList.JMP, 0, pcode_len1))
-        PCode[pcode_len2].a = len(PCode)
+    elif tokens[token_num]['value'] == 'while':  # while-do语句
+        try:
+            pcode_len1 = len(PCode)
+            next_token()
+            condition()
+            pcode_len2 = len(PCode)
+            PCode.append(PCodeOpt(PCodeList.JPC, 0, 0))
+            check_token(token={'type': None, 'value': 'do'})
+            next_token()
+            statement()
+            PCode.append(PCodeOpt(PCodeList.JMP, 0, pcode_len1))
+            PCode[pcode_len2].a = len(PCode)
+        except ParserError:
+            skip_error()
 
-    elif tokens[token_num]['value'] == 'call':
+    elif tokens[token_num]['value'] == 'call':  # call语句
         try:
             next_token()
             check_token(token={'type': 'IDENTIFIER', 'value': None})
@@ -319,22 +352,29 @@ def statement():
         except ParserError:
             skip_error(struct='statement')
 
-    elif tokens[token_num]['value'] == 'begin':
+    elif tokens[token_num]['value'] == 'begin':  # begin语句
         next_token()
         try:
             statement()
         except ParserError:
             skip_error(struct='statement')
+        while tokens[token_num]['type'] == 'IDENTIFIER' \
+                or tokens[token_num]['value'] in ['if', 'while', 'call', 'begin', 'repeat', 'read', 'write']:
+            e.table.append(ParserError(type_=5, pos=tokens[token_num]['pos'], token=';'))
+            statement()
         while tokens[token_num]['value'] == ';':
             try:
                 next_token()
                 statement()
             except ParserError:
                 skip_error(struct='statement')
-        check_token(token={'type': None, 'value': 'end'})
-        next_token()
+        try:
+            check_token(token={'type': None, 'value': 'end'})
+            next_token()
+        except ParserError:
+            skip_error(struct='statement')
 
-    elif tokens[token_num]['value'] == 'repeat':
+    elif tokens[token_num]['value'] == 'repeat':  # repeat语句
         next_token()
         pcode_len = len(PCode)
         statement()
@@ -346,35 +386,41 @@ def statement():
         condition()
         PCode.append(PCodeOpt(PCodeList.JPC, 0, pcode_len))
 
-    elif tokens[token_num]['value'] == 'read':
-        next_token()
-        check_token(token={'type': None, 'value': '('})
-        next_token()
-        while True:
-            check_token(token={'type': 'IDENTIFIER', 'value': None})
-            record = find_sym(tokens[token_num]['value'], 'var')
-            PCode.append(PCodeOpt(PCodeList.RED, cur_lv - record.level, record.address))
+    elif tokens[token_num]['value'] == 'read':  # read语句
+        try:
             next_token()
-            if tokens[token_num]['value'] != ',':
-                break
-            else:
+            check_token(token={'type': None, 'value': '('})
+            next_token()
+            while True:
+                check_token(token={'type': 'IDENTIFIER', 'value': None})
+                record = find_sym(tokens[token_num]['value'], 'var')
+                PCode.append(PCodeOpt(PCodeList.RED, cur_lv - record.level, record.address))
                 next_token()
-        check_token(token={'type': None, 'value': ')'})
-        next_token()
+                if tokens[token_num]['value'] != ',':
+                    break
+                else:
+                    next_token()
+            check_token(token={'type': None, 'value': ')'})
+            next_token()
+        except ParserError:
+            skip_error(struct='statement')
 
-    elif tokens[token_num]['value'] == 'write':
-        next_token()
-        check_token(token={'type': None, 'value': '('})
-        next_token()
-        while True:
-            expression()
-            PCode.append(PCodeOpt(PCodeList.WRT, 0, 0))
-            if tokens[token_num]['value'] != ',':
-                break
-            else:
-                next_token()
-        check_token(token={'type': None, 'value': ')'})
-        next_token()
+    elif tokens[token_num]['value'] == 'write':  # write语句
+        try:
+            next_token()
+            check_token(token={'type': None, 'value': '('})
+            next_token()
+            while True:
+                expression()
+                PCode.append(PCodeOpt(PCodeList.WRT, 0, 0))
+                if tokens[token_num]['value'] != ',':
+                    break
+                else:
+                    next_token()
+            check_token(token={'type': None, 'value': ')'})
+            next_token()
+        except ParserError:
+            skip_error(struct='statement')
 
 
 def block(dx):
@@ -462,7 +508,7 @@ def analyze():
     insert_table(record)
     block(3)
     try:
-        check_token(token={'type': None, 'value': '.'}, struct='.')
+        check_token(token={'type': None, 'value': '.'})
     except ParserError:
         pass
     # try:
@@ -484,17 +530,12 @@ def main(data):
     if len(e.table) > 0:
         for error_record in e.table:
             ans += str(error_record) + '\n'
+        ans += 'Totally find ' + str(len(e)) + ' errors.\n'
     else:
         for ln, record in enumerate(PCode):
             ans += str(record.f) + ', ' + str(record.l) + ', ' + str(record.a) + '\n'
     return ans
 
 if __name__ == '__main__':
-    test_data = lexer.load_data('../data/e16.txt')
+    test_data = lexer.load_data('../data/wrong1.pl0')
     print(main(test_data))
-    # try:
-    #     test_data = lexer.load_data('../data/test.txt')
-    #     print(main(test_data))
-    # except Exception:
-    #     for error_record in e.table:
-    #         print(error_record)
