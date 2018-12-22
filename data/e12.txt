@@ -1,0 +1,9 @@
+const a=1;
+procedure x;
+begin
+end;
+
+begin
+x:=2;
+a:=1;
+end.

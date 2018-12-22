@@ -1,0 +1,7 @@
+const 1;
+var 2;
+procedure 3;
+begin
+end;
+begin
+end.

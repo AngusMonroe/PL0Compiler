@@ -38,13 +38,13 @@ def analyze(data):
         if token[0] == '\n':
             pos[0] += 1
             pos[1] = 1
-        pos[1] += len(token[0])
 
         data = data.replace(token[0], '', 1)  # 将已匹配到的token删去
         # print(data)
 
         if token[1] == 'UNDEFINED_SYMBOL':
             e.table.append(LexerError(message='Unidentified character', pos=(pos[0], pos[1]), token=token[0]))  # 非法字符异常
+            pos[1] += len(token[0])
             continue
 
         if token[1] != 'BLANK':
@@ -54,6 +54,7 @@ def analyze(data):
                 token.append(token[0])
             res.append(token)
             tokens.append({'type': token[1], 'value': token[0], 'pos': (pos[0], pos[1])})
+            pos[1] += len(token[0])
     return res, tokens, e
 
 

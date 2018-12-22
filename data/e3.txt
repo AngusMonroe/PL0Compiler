@@ -1,0 +1,5 @@
+const a;
+var b;
+begin
+    b:=1;
+end.

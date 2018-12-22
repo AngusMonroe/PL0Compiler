@@ -1,0 +1,8 @@
+const a=1;
+var a, b;
+procedure x
+begin
+end;
+begin
+
+end.

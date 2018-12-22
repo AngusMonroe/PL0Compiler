@@ -74,11 +74,15 @@ def print_sym_table():  # 输出符号表
         print(record)
 
 
-def skip_error():  # 将一整行的token跳过
+def skip_error(struct=None):  # 将一整行的token跳过
+    global token_num
+    print('skip line ' + str(tokens[token_num]['pos'][0]))
     cur_line = tokens[token_num]['pos'][0]
     while tokens[token_num]['pos'][0] == cur_line:  # and tokens[token_num]['value'] != (',' or ';'):
         # print(tokens[token_num]['pos'][0])
         next_token()
+    if struct == 'statement':
+        token_num -= 1
     # if tokens[token_num]['value'] != (',' or ';'):
     #     next_token()
 
@@ -87,11 +91,17 @@ def next_token():  # 处理下一个token
     global token_num
     token_num += 1
     if token_num >= len(tokens):
-        raise Exception
-        # raise ParserError('unexpected end of program', self.lexer.pos)
+        e.table.append(ParserError(type_=25, pos=tokens[token_num - 1]['pos'], token=tokens[token_num - 1]['value']))
+        raise ParserError(type_=25, pos=tokens[token_num - 1]['pos'], token=tokens[token_num - 1]['value'])
 
 
-def check_token(token):  # 查看当前token是否符合要求
+def check_token(token, struct=None):  # 查看当前token是否符合要求
+    global token_num
+    if token_num >= len(tokens):
+        if ParserError(type_=25, pos=tokens[token_num - 1]['pos'], token=tokens[token_num - 1]['value']) != e.table[-1]:
+            e.table.append(
+                ParserError(type_=25, pos=tokens[token_num - 1]['pos'], token=tokens[token_num - 1]['value']))
+        raise ParserError(type_=25, pos=tokens[token_num - 1]['pos'], token=tokens[token_num - 1]['value'])
     flag = False
     if token['type'] is None:  # type为空，比对value
         if token['value'] == tokens[token_num]['value']:
@@ -102,10 +112,38 @@ def check_token(token):  # 查看当前token是否符合要求
     else:
         if token == tokens[token_num]:
             flag = True
+
     if not flag:
         if tokens[token_num]['value'] == ':=' and token['value'] == '=':
             e.table.append(ParserError(type_=1, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
+        elif token['type'] == 'NUMBER' and tokens[token_num - 1]['value'] == '=':
+            e.table.append(ParserError(type_=2, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
+        elif token['value'] == '=' and tokens[token_num - 1]['type'] == 'IDENTIFIER':
+            e.table.append(ParserError(type_=3, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
+        elif token['type'] == 'IDENTIFIER' and tokens[token_num - 1]['value'] in ['const', 'var', 'procedure']:
+            e.table.append(ParserError(type_=4, pos=tokens[token_num]['pos'], token=tokens[token_num - 1]['value']))
+        elif token['value'] == ',':
+            e.table.append(ParserError(type_=5, pos=tokens[token_num]['pos'], token=','))
+        elif token['value'] == ';' and struct is None:
+            if tokens[token_num]['type'] == 'IDENTIFIER':
+                e.table.append(ParserError(type_=5, pos=tokens[token_num]['pos'], token=','))
+            else:
+                e.table.append(ParserError(type_=5, pos=tokens[token_num]['pos'], token=';'))
+            token_num -= 1
+        elif struct == 'procedure':
+            e.table.append(ParserError(type_=6, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
+            token_num -= 1
+        elif token['value'] == '.':
+            e.table.append(ParserError(type_=9, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
+        elif tokens[token_num]['value'] == '=' and token['value'] == ':=':
+            e.table.append(ParserError(type_=13, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
+        elif tokens[token_num - 1]['value'] == 'call' and token['type'] == 'IDENTIFIER':
+            e.table.append(ParserError(type_=14, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
+        elif token['value'] == 'then':
+            e.table.append(ParserError(type_=16, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
         else:
+            print(token)
+            print(tokens[token_num])
             e.table.append(ParserError('Expecting "%s" but current token is "%s"' % (str(token['value']),
                            str(tokens[token_num]['value']))))
         raise ParserError
@@ -128,14 +166,23 @@ def find_sym(name, type_=None):  # 查询符号表
     for record in sym_table:
         if record.name == name:
             if type_ and record.type != type_:
-                e.table.append(WrongSymbolType('Unexpected symbol type, expecting %s' % type_))
-                raise WrongSymbolType
+                if record.type == 'const' or 'var' and tokens[token_num - 1] == 'call':
+                    e.table.append(
+                        ParserError(type_=15, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
+                    raise ParserError
+                elif record.type == 'const' or 'procedure' and tokens[token_num + 1] == ':=':
+                    e.table.append(
+                        ParserError(type_=12, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
+                    raise ParserError
+                else:
+                    e.table.append(WrongSymbolType('Unexpected symbol type, expecting %s' % type_))
+                    raise WrongSymbolType
             else:
                 return record
     # print_PCode()
     print_sym_table()
     # print(tokens[token_num])
-    e.table.append(UndefinedSymbol('Undefined symbol: %s' % name))
+    e.table.append(ParserError(type_=11, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
     raise UndefinedSymbol
 
 
@@ -218,6 +265,8 @@ def condition():
 
     
 def statement():
+    if token_num >= len(tokens):
+        return
     if tokens[token_num]['type'] == 'IDENTIFIER':  # 变量赋值
         try:
             record = find_sym(tokens[token_num]['value'], 'var')  # 查符号表
@@ -227,7 +276,7 @@ def statement():
             expression()  # 表达式
             PCode.append(PCodeOpt(PCodeList.STO, cur_lv - record.level, record.address))
         except ParserError:
-            skip_error()
+            skip_error(struct='statement')
     elif tokens[token_num]['value'] == 'if':  # if语句
         try:
             next_token()
@@ -261,18 +310,27 @@ def statement():
         PCode[pcode_len2].a = len(PCode)
 
     elif tokens[token_num]['value'] == 'call':
-        next_token()
-        check_token(token={'type': 'IDENTIFIER', 'value': None})
-        record = find_sym(tokens[token_num]['value'], 'procedure')
-        PCode.append(PCodeOpt(PCodeList.CAL, cur_lv - record.level, record.address))
-        next_token()
+        try:
+            next_token()
+            check_token(token={'type': 'IDENTIFIER', 'value': None})
+            record = find_sym(tokens[token_num]['value'], 'procedure')
+            PCode.append(PCodeOpt(PCodeList.CAL, cur_lv - record.level, record.address))
+            next_token()
+        except ParserError:
+            skip_error(struct='statement')
 
     elif tokens[token_num]['value'] == 'begin':
         next_token()
-        statement()
-        while tokens[token_num]['value'] == ';':
-            next_token()
+        try:
             statement()
+        except ParserError:
+            skip_error(struct='statement')
+        while tokens[token_num]['value'] == ';':
+            try:
+                next_token()
+                statement()
+            except ParserError:
+                skip_error(struct='statement')
         check_token(token={'type': None, 'value': 'end'})
         next_token()
 
@@ -368,22 +426,28 @@ def block(dx):
             next_token()
     except ParserError:
         skip_error()
-    try:
-        if tokens[token_num]['value'] == 'procedure':  # 对procedure关键字进行处理
-            record = Record('procedure', None, None, cur_lv)
-            while tokens[token_num]['value'] == 'procedure':
-                next_token()
+    if tokens[token_num]['value'] == 'procedure':  # 对procedure关键字进行处理
+        record = Record('procedure', None, None, cur_lv)
+        while tokens[token_num]['value'] == 'procedure':
+            next_token()
+            try:
                 check_token(token={'type': 'IDENTIFIER', 'value': None})  # 读一个标识符
                 record.name = tokens[token_num]['value']
                 insert_table(record)
                 next_token()
+                check_token(token={'type': None, 'value': ';'}, struct='procedure')  # 读一个;
+                next_token()
+            except ParserError:
+                skip_error()
+            block(3)
+            try:
                 check_token(token={'type': None, 'value': ';'})  # 读一个;
                 next_token()
-                block(3)
-                check_token(token={'type': None, 'value': ';'})  # 读一个;
-                next_token()
-    except ParserError:
-        skip_error()
+            except ParserError as ex:
+                if ex.type == 25:
+                    break
+                else:
+                    skip_error()
     PCode[pcode_len].a = len(PCode)  # fill back the JMP inst
     sym_table[sym_table_len - 1].address = len(PCode)  # this value will be used by call
     PCode.append(PCodeOpt(PCodeList.INT, 0, dx))
@@ -397,13 +461,23 @@ def analyze():
     record = Record()
     insert_table(record)
     block(3)
-    check_token(token={'type': None, 'value': '.'})
+    try:
+        check_token(token={'type': None, 'value': '.'}, struct='.')
+    except ParserError:
+        pass
+    # try:
+    #     block(3)
+    #     check_token(token={'type': None, 'value': '.'})
+    # except ParserError as e:
+    #     if e.type == '25':
+    #         pass
 
 
 def main(data):
     global tokens, e
     init()
     res, tokens, e = lexer.analyze(data)
+    print(tokens)
     next_token()
     analyze()
     ans = ''
@@ -416,5 +490,11 @@ def main(data):
     return ans
 
 if __name__ == '__main__':
-    test_data = lexer.load_data('../data/test.txt')
+    test_data = lexer.load_data('../data/e16.txt')
     print(main(test_data))
+    # try:
+    #     test_data = lexer.load_data('../data/test.txt')
+    #     print(main(test_data))
+    # except Exception:
+    #     for error_record in e.table:
+    #         print(error_record)
