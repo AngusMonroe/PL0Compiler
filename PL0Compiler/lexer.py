@@ -48,7 +48,7 @@ def analyze(data):
             continue
 
         if token[1] != 'BLANK':
-            if token[1] == 'NUMBER' and int(token[0]) > 2**16 - 1:  # 判断数字过大
+            if token[1] == 'NUMBER' and float(token[0]) > 2**16 - 1:  # 判断数字过大
                 e.table.append(ParserError(type_=30, pos=(pos[0], pos[1]), token=token[0]))  # 非法字符异常
             if token[0].isdecimal():  # 将整数转换为二进制
                 token.append(str(bin(int(token[0]))))
