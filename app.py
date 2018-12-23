@@ -27,12 +27,12 @@ def show_opa():
     return render_template('opa.html')
 
 
-@app.route("/")
 @app.route("/parser")
 def show_parser():
     return render_template('parser.html')
 
 
+@app.route("/")
 @app.route("/interpreter")
 def show_interpreter():
     return render_template('interpreter.html')
@@ -88,9 +88,10 @@ def api_interpreter():
         ans, pcode = parser.main(data['string'])
         in_ = data['input'].split('\n')
         res = interpreter._interpret(pcode, in_)
+        return json.dumps({'data': ans, 'res': res})
     except Exception:
         ans = 'Error!'
-    return json.dumps({'data': ans, 'res': res})
+        return json.dumps({'data': ans})
 
 
 if __name__ == "__main__":
