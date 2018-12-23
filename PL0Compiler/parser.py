@@ -550,8 +550,8 @@ def main(data):
     else:
         for ln, record in enumerate(PCode):
             ans += str(record.f) + ', ' + str(record.l) + ', ' + str(record.a) + '\n'
-    return ans
+    return ans, PCode
 
 if __name__ == '__main__':
-    test_data = lexer.load_data('../data/right.pl0')
+    test_data = lexer.load_data('../data/wrong1.pl0')
     print(main(test_data))

@@ -29,8 +29,13 @@ def show_opa():
 
 @app.route("/")
 @app.route("/parser")
-def show_compiler():
+def show_parser():
     return render_template('parser.html')
+
+
+@app.route("/interpreter")
+def show_interpreter():
+    return render_template('interpreter.html')
 
 
 @app.route("/api/v1/lexer", methods=['POST'])
@@ -63,15 +68,29 @@ def api_opa():
 
 
 @app.route("/api/v1/parser", methods=['POST'])
-def api_compiler():
+def api_parser():
     from PL0Compiler import parser
     data = request.get_json()
     print(data['string'])
     try:
-        ans = parser.main(data['string'])
+        ans, pcode = parser.main(data['string'])
     except Exception:
         ans = 'Error!'
     return json.dumps({'data': ans})
+
+
+@app.route("/api/v1/interpreter", methods=['POST'])
+def api_interpreter():
+    from PL0Compiler import parser, interpreter
+    data = request.get_json()
+    print(data)
+    try:
+        ans, pcode = parser.main(data['string'])
+        in_ = data['input'].split('\n')
+        res = interpreter._interpret(pcode, in_)
+    except Exception:
+        ans = 'Error!'
+    return json.dumps({'data': ans, 'res': res})
 
 
 if __name__ == "__main__":

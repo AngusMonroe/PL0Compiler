@@ -4,7 +4,7 @@
 	<meta charset="UTF-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 	<meta name="viewpoLErt" content="width=device-width, initial-scale=1.0">
-	<title>PL0 PARSER</title>
+	<title>PL0 INTERPRETER</title>
 	<link rel="stylesheet" type="text/css" href="../static/css/normalize.css" />
 	<link rel="stylesheet" type="text/css" href="../static/css/htmleaf-demo.css">
 	<link href="../static/css/codemirror.css" rel="stylesheet" type="text/css">
@@ -352,27 +352,35 @@
 
 	    <section id="main_content" style="width: 1100px">
 			<div id="head">
-				<h1>PL0 PARSER</h1>
+				<h1>PL0 INTERPRETER</h1>
 				<p class="sub_head">A PL0 compiler designed for BUAA Compiler Lab 2018.</p>
 				<div style="height: 60px"></div>
 			</div>
 
 			<div class="row" style="width: 1050px; position:relative; float: left">
 				<div class="col" style="width: 550px; float: left" align="left" >
-					<textarea id="code" placeholder="Input your code there." name="code" style="resize:none" rows="10" cols="50"></textarea>
+					<textarea id="code" placeholder="Input your code there." name="code" style="resize:none" rows="10" cols="45"></textarea>
 					<div style="height: 20px"></div>
+                    <div id="layout_input" style="width: 550px; float: left" align="left">
+                        <textarea id="input" placeholder="Input" name="code" style="resize:none" rows="3" cols="66"></textarea>
+                    </div>
+                    <div style="height: 20px"></div>
 					<div id="layout_file" style="float:left" align="left">
 						<input id="input-file" type="file" onchange="showFileName()">
 					</div>
 					<div style="height: 20px; width: 400px; float: left" align="left"></div>
-					<div id="layout_confirm" style="width: 400px; float: left" align="left">
+					<div id="layout_confirm" style="width: 500px; float: left" align="left">
 						<button type="submit" class="btn btn-secondary" onclick="submit()">Run</button>
 					</div>
+
+                </div>
+				<div class="col" style="width: 500px; float: right" align="right">
+					<textarea id="result" placeholder="The result would be shown there." style="resize:none" rows="15" cols="50"></textarea>
+					<div style="height: 20px"></div>
+					<textarea id="output" placeholder="Output" name="code" style="resize:none" rows="3" cols="50"></textarea>
 				</div>
 
-				<div class="col" style="width: 500px; float: right" align="right">
-					<textarea id="result" placeholder="The result would be shown there." style="resize:none" rows="15" cols="45"></textarea>
-				</div>
+
 
 			</div>
 
@@ -406,17 +414,19 @@
 
                 function submit(){
                     var input_text = editor.getValue();
-//                    alert(input_text);
+                    var input_code = $("#input").val();
+//                  alert(input_text);
 					if(input_text == '')
 					{
                         alert("Please input code first.");
 					}
 
                     $.ajax({
-                        url: "/api/v1/parser",
+                        url: "/api/v1/interpreter",
                         type: 'POST',
                         data:JSON.stringify({
                             "string":input_text,
+                            "input":input_code,
                             "csrfmiddlewaretoken":$("[name='csrfmiddlewaretoken']").val()
                         }),
                         processData: false,  // tell jquery not to process the data
@@ -427,6 +437,9 @@
                             $("#result").val(data['data']);
 //                            var obj = document.getElementById("result");
 //                            obj.append(data['data']);
+                            $("#output").val(data['res']);
+//                            var obj = document.getElementById("output");
+//                            obj.append(data['res']);
                         }
                     })}
 
