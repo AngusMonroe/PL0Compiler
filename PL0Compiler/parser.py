@@ -80,7 +80,8 @@ def skip_error(struct=None):  # 将一整行的token跳过
     except IndexError:
         e.table.append(ParserError(type_=25, pos=tokens[token_num - 1]['pos'], token=tokens[token_num - 1]['value']))
         return
-    if tokens[token_num]['pos'][0] != tokens[token_num - 1]['pos'][0] and tokens[token_num]['value'] != 'const' and 'var':
+    if tokens[token_num]['pos'][0] != tokens[token_num - 1]['pos'][0] and \
+            tokens[token_num]['value'] != 'const' and tokens[token_num]['value'] != 'var':
         cur_line = tokens[token_num - 1]['pos'][0]
     else:
         cur_line = tokens[token_num]['pos'][0]
@@ -361,13 +362,15 @@ def statement():
         except ParserError:
             skip_error(struct='statement')
 
-        while tokens[token_num]['value'] != 'end':
+        nol = 0  # 奇数循环次数
+        while tokens[token_num]['value'] != 'end' and nol < 30:
+            nol += 1
             try:
                 check_token(token={'type': None, 'value': ';'})
-                next_token()
             except ParserError:
                 skip_error(struct='statement')
             try:
+                next_token()
                 statement()
             except ParserError:
                 skip_error(struct='statement')
