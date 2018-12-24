@@ -550,10 +550,11 @@ def main(data):
         for error_record in e.table:
             ans += str(error_record) + '\n'
         ans += 'Totally find ' + str(len(e)) + ' errors.\n'
+        return ans, []
     else:
         for ln, record in enumerate(PCode):
             ans += str(record.f) + ', ' + str(record.l) + ', ' + str(record.a) + '\n'
-    return ans, PCode
+        return ans, PCode
 
 if __name__ == '__main__':
     test_data = lexer.load_data('../data/wrong1.pl0')

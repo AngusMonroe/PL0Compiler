@@ -10,7 +10,7 @@ from PL0Compiler import opa
 
 app = Flask(__name__)
 
-PORT = 5014
+PORT = 5013
 
 rules = opa.load_data('data/opa.txt')
 
@@ -87,7 +87,9 @@ def api_interpreter():
     try:
         ans, pcode = parser.main(data['string'])
         in_ = data['input'].split('\n')
-        res = interpreter._interpret(pcode, in_)
+        res = ''
+        if pcode:
+            res = interpreter._interpret(pcode, in_)
         return json.dumps({'data': ans, 'res': res})
     except Exception:
         ans = 'Error!'
