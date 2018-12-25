@@ -6,7 +6,7 @@ from flask import request
 from flask import jsonify
 import sys
 import json
-from PL0Compiler import opa
+from PL0Compiler import opa, exception
 
 app = Flask(__name__)
 
@@ -86,10 +86,15 @@ def api_interpreter():
     print(data)
     try:
         ans, pcode = parser.main(data['string'])
-        in_ = data['input'].split('\n')
+        in_ = []
+        if data['input']:
+            in_ = data['input'].split('\n')
         res = ''
-        if pcode:
-            res = interpreter._interpret(pcode, in_)
+        try:
+            if pcode:
+                res = interpreter._interpret(pcode, in_)
+        except exception.InterpreterError:
+            res = 'Invalid input'
         return json.dumps({'data': ans, 'res': res})
     except Exception:
         ans = 'Error!'
