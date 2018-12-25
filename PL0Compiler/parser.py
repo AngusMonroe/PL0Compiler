@@ -181,10 +181,9 @@ def insert_table(record):  # 向符号表中插入一个Record对象
         if record.level != existing_record.level:
             break
 
-        if record.name == existing_record.name:
+        if record.name == existing_record.name and record.type == existing_record.type:
             e.table.append(ParserError(type_=26, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
             raise ParserError
-
     sym_table.append(deepcopy(record))
 
     
@@ -471,6 +470,7 @@ def block(dx):
     try:
         if tokens[token_num]['value'] == 'var':  # 对var关键字进行处理
             record = Record('var', None, None, cur_lv)
+            print(cur_lv)
             check_token(token={'type': None, 'value': 'var'})  # 读一个var
             next_token()
             while True:  # 可以同时声明多个var变量
@@ -487,6 +487,9 @@ def block(dx):
             check_token(token={'type': None, 'value': ';'})  # 读一个;
             next_token()
     except ParserError:
+        skip_error()
+    if tokens[token_num]['value'] == 'const':
+        e.table.append(ParserError(type_=6, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
         skip_error()
     if tokens[token_num]['value'] == 'procedure':  # 对procedure关键字进行处理
         record = Record('procedure', None, None, cur_lv)
@@ -514,7 +517,7 @@ def block(dx):
             and tokens[token_num]['value'] not in ['if', 'while', 'call', 'begin', 'repeat', 'read', 'write']:
         e.table.append(ParserError(type_=6, pos=tokens[token_num]['pos'], token=tokens[token_num]['value']))
         skip_error()
-    print(tokens[token_num]['value'])
+    print_sym_table()
     PCode[pcode_len].a = len(PCode)  # fill back the JMP inst
     sym_table[sym_table_len - 1].address = len(PCode)  # this value will be used by call
     PCode.append(PCodeOpt(PCodeList.INT, 0, dx))
