@@ -28,7 +28,11 @@ def _interpret(pcodes, in_):
         len(stack)   -> None
     '''
     # try:
+    cn = 0
     while True:
+        cn += 1
+        if cn >= 1000:
+            break
         print(program_counter)
         code = pcodes[program_counter]
         print(code)
@@ -138,7 +142,7 @@ def main(data):
 
 
 if __name__ == '__main__':
-    test_data = lexer.load_data('../data/right.pl0')
+    test_data = lexer.load_data('../data/wrong1.pl0')
     pc = analyze(test_data)
     for record in pc:
         print(str(record) + '\n')

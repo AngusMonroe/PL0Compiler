@@ -546,9 +546,12 @@ def analyze(data):
 def main(data):
     analyze(data)
     ans = ''
+    check_list = []
     if len(e.table) > 0:
         for error_record in e.table:
-            ans += str(error_record) + '\n'
+            if error_record not in check_list:
+                ans += str(error_record) + '\n'
+                check_list.append(error_record)
         ans += 'Totally find ' + str(len(e)) + ' errors.\n'
         return ans, []
     else:
@@ -557,5 +560,5 @@ def main(data):
         return ans, PCode
 
 if __name__ == '__main__':
-    test_data = lexer.load_data('../data/wrong1.pl0')
+    test_data = lexer.load_data('../data/corrected.pl0')
     print(main(test_data))
